@@ -45,8 +45,10 @@ interface State {
 
   demo: { active: boolean; step: number }
   mapTheme: MapTheme
+  railOpen: boolean
 
   enter: () => void
+  setRailOpen: (open: boolean) => void
   setMapTheme: (t: MapTheme) => void
   setData: (dataset: Dataset, geo: GeoBundle) => void
   setLoadError: (e: string) => void
@@ -117,8 +119,10 @@ export const useStore = create<State>((set, get) => ({
 
   demo: { active: false, step: 0 },
   mapTheme: readTheme(),
+  railOpen: typeof window === 'undefined' || window.innerWidth >= 820,
 
   enter: () => set({ phase: 'app' }),
+  setRailOpen: (railOpen) => set({ railOpen }),
   setMapTheme: (mapTheme) => {
     try {
       localStorage.setItem('unheard.mapTheme', mapTheme)
@@ -146,7 +150,7 @@ export const useStore = create<State>((set, get) => ({
     const d = id ? get().byId[id] : null
     if (d && fly) set((s) => ({ camera: { seq: s.camera.seq + 1, bbox: d.bbox } }))
   },
-  setLeftPanel: (leftPanel) => set({ leftPanel }),
+  setLeftPanel: (leftPanel) => set({ leftPanel, railOpen: true }),
   setAsk: (ask) => set({ ask, highlightIds: ask ? ask.results.map((r) => r.id) : [] }),
   flyToBbox: (bbox) => set((s) => ({ camera: { seq: s.camera.seq + 1, bbox } })),
   flyHome: () => set((s) => ({ camera: { seq: s.camera.seq + 1, bbox: INDIA_BBOX } })),

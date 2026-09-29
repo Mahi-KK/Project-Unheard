@@ -18,6 +18,8 @@ export function App() {
   const leftPanel = useStore((s) => s.leftPanel)
   const selectedId = useStore((s) => s.selectedId)
   const backend = useStore((s) => s.backend)
+  const railOpen = useStore((s) => s.railOpen)
+  const setRailOpen = useStore((s) => s.setRailOpen)
 
   // offline dataset: the core product never needs the network
   useEffect(() => {
@@ -37,7 +39,14 @@ export function App() {
         if (!alive) return
         const was = useStore.getState().backend
         useStore.getState().setHealth(h, 'online')
-        if (was !== 'online') void refreshCaptured().catch(() => undefined)
+        if (was !== 'online') {
+          // demo signals are scripted; never let an interrupted demo leave one behind
+          void api
+            .clearSignals('demo')
+            .catch(() => undefined)
+            .then(() => refreshCaptured())
+            .catch(() => undefined)
+        }
         timer = window.setTimeout(tick, 30_000)
       } catch {
         if (!alive) return
@@ -63,11 +72,19 @@ export function App() {
       <TopBar />
       <DemoBar />
       <main className="stage">
-        <div className="rail" id="rail">
+        <div className="rail" id="rail" data-open={railOpen} inert={!railOpen}>
+          <button type="button" className="rail__collapse" onClick={() => setRailOpen(false)} aria-label="Hide side panel" title="Hide panel">
+            ‹
+          </button>
           {leftPanel === 'ledger' && <Ledger />}
           {leftPanel === 'capture' && <CapturePanel />}
           {leftPanel === 'ask' && <AskPanel />}
         </div>
+        {!railOpen && (
+          <button type="button" className="rail__expand" onClick={() => setRailOpen(true)} aria-label="Show side panel">
+            <span aria-hidden="true">›</span> Panel
+          </button>
+        )}
         <Suspense fallback={<div className="map-wrap map-wrap--loading">Loading map…</div>}>
           <MapView />
         </Suspense>

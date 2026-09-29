@@ -7,12 +7,33 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { CATEGORY_LABEL, INDIA_BBOX, useStore } from '../../app/store'
 import { metricFor, r1 } from '../../services/scoring'
 import type { District, Mode } from '../../types/data'
+import { startBackdrop } from './mapBackdrop'
 import { hatchImage, NEED_STOPS, readPalette, UNHEARD_HIGH, UNHEARD_MID, type MapPalette } from './mapStyle'
 
 maplibregl.setWorkerUrl(workerUrl)
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
-const RAIL_PAD = { top: 40, bottom: 40, left: 420, right: 40 }
+type Pad = { top: number; bottom: number; left: number; right: number }
+
+/**
+ * Camera padding that keeps districts clear of the floating side panel.
+ * Reads the panel's live width (it collapses and shrinks on narrow windows)
+ * and never asks for more padding than the map can give.
+ */
+function padFor(map: MLMap, base = 40): Pad {
+  const rail = document.getElementById('rail')
+  const railOpen = rail && rail.getAttribute('data-open') !== 'false' && rail.offsetWidth > 0
+  const mapRect = map.getContainer().getBoundingClientRect()
+  let left = base
+  if (railOpen && rail) left = Math.max(base, rail.getBoundingClientRect().right - mapRect.left + base * 0.6)
+  const w = mapRect.width
+  const h = mapRect.height
+  // keep at least 45% of the width / 50% of the height for the geography
+  left = Math.min(left, Math.max(base, w * 0.55))
+  const right = Math.min(base, w * 0.1)
+  const tb = Math.min(base, h * 0.12)
+  return { top: tb, bottom: tb, left, right }
+}
 
 type Props = { id: string; name: string; state: string; s: number; n: number; d: number; u: number; top: number; cap: number }
 type Setter = (layer: string, prop: string, value: unknown) => void
@@ -26,7 +47,7 @@ function stepExpr(prop: string, colors: string[], stops: number[]): maplibregl.E
 /** Colour every layer for the current theme + category (no geometry change). */
 function paint(map: MLMap, p: MapPalette) {
   const sp = map.setPaintProperty.bind(map) as unknown as Setter
-  sp('bg', 'background-color', p.bg)
+  sp('bg', 'background-color', 'rgba(0,0,0,0)') // transparent: the living backdrop shows through the sea
   sp('base', 'fill-color', p.land)
   sp('need', 'fill-color', stepExpr('n', p.need, NEED_STOPS))
   sp('unheard-mid', 'fill-color', p.unheard[0])
@@ -47,6 +68,7 @@ function paint(map: MLMap, p: MapPalette) {
 
 export function MapView() {
   const container = useRef<HTMLDivElement>(null)
+  const backdrop = useRef<HTMLCanvasElement>(null)
   const mapRef = useRef<MLMap | null>(null)
   const markersRef = useRef<maplibregl.Marker[]>([])
   const timersRef = useRef<number[]>([])
@@ -124,14 +146,15 @@ export function MapView() {
     try {
       map = new maplibregl.Map({
         container: container.current,
-        style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': p.bg } }] },
+        style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': 'rgba(0,0,0,0)' } }] },
         bounds: INDIA_BBOX,
-        fitBoundsOptions: { padding: RAIL_PAD },
-        minZoom: 3,
-        maxZoom: 9.5,
+        fitBoundsOptions: { padding: 20 },
+        minZoom: 2.2,
+        maxZoom: 10,
+        // generous bounds: free panning in every direction, but India can't be lost off-screen
         maxBounds: [
-          [55, 0],
-          [110, 42],
+          [25, -25],
+          [140, 60],
         ],
         renderWorldCopies: false,
         attributionControl: false,
@@ -146,6 +169,8 @@ export function MapView() {
     }
     map.touchZoomRotate.disableRotation()
     map.keyboard.disableRotation()
+    map.dragPan.enable()
+    map.scrollZoom.enable()
     map.addControl(
       new maplibregl.AttributionControl({
         compact: true,
@@ -239,6 +264,7 @@ export function MapView() {
         paint: { 'line-color': p.paper, 'line-width': 3 },
       })
       paint(map, p)
+      map.fitBounds(INDIA_BBOX, { padding: padFor(map, 24), duration: 0 })
 
       let hovered: string | null = null
       map.on('mousemove', 'base', (e) => {
@@ -277,6 +303,13 @@ export function MapView() {
       mapRef.current = null
     }
   }, [geo, select])
+
+  // --------------------------------------------------------------- living backdrop (sea + graticule)
+  useEffect(() => {
+    const map = mapRef.current
+    if (!ready || !map || !backdrop.current) return
+    return startBackdrop(backdrop.current, map, () => useStore.getState().mapTheme)
+  }, [ready])
 
   // --------------------------------------------------------------- theme / category colours
   useEffect(() => {
@@ -344,7 +377,7 @@ export function MapView() {
     // 4. camera settles on the strongest signals; ranks appear
     at(2600, () => {
       const bb = bboxOf(top10)
-      if (bb) map.fitBounds(bb, { padding: { top: 140, bottom: 140, left: 520, right: 160 }, duration: rm ? 0 : 1800, maxZoom: 5.4 })
+      if (bb) map.fitBounds(bb, { padding: padFor(map, 90), duration: rm ? 0 : 1800, maxZoom: 5.4 })
       addRankMarkers(map, top10, markersRef, select, rm)
     })
     return () => {
@@ -375,7 +408,7 @@ export function MapView() {
     map.setFilter('highlight', ['in', ['get', 'id'], ['literal', highlightIds]])
     if (highlightIds.length) {
       const bb = bboxOf(highlightIds.map((id) => useStore.getState().byId[id]).filter(Boolean))
-      if (bb) map.fitBounds(bb, { padding: { top: 80, bottom: 80, left: 440, right: 80 }, duration: reducedMotion() ? 0 : 1200, maxZoom: 6.5 })
+      if (bb) map.fitBounds(bb, { padding: padFor(map, 60), duration: reducedMotion() ? 0 : 1200, maxZoom: 6.5 })
     }
   }, [ready, highlightIds])
 
@@ -384,7 +417,7 @@ export function MapView() {
     if (!ready || !map || camera.seq === 0 || !camera.bbox) return
     const home = camera.bbox === INDIA_BBOX
     map.fitBounds(camera.bbox, {
-      padding: home ? RAIL_PAD : { top: 80, bottom: 80, left: 440, right: 80 },
+      padding: padFor(map, home ? 24 : 60),
       duration: reducedMotion() ? 0 : 1100,
       maxZoom: 5.9,
     })
@@ -393,6 +426,7 @@ export function MapView() {
   const hoverValue = hover ? metricFor(hover.d, mode, category) : null
   return (
     <div className="map-wrap" data-theme={theme}>
+      <canvas ref={backdrop} className="map-backdrop" aria-hidden="true" />
       <div
         ref={container}
         className="map"

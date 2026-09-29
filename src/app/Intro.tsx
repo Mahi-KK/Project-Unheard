@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { HeroBackdrop } from './HeroBackdrop'
+import { HeroTicker } from './HeroTicker'
 import { IntroMap } from './IntroMap'
 import { useStore } from './store'
 
@@ -12,6 +14,7 @@ export function Intro() {
 
   return (
     <main className="intro">
+      <HeroBackdrop />
       <div className="intro__layout">
         <div className="intro__grid">
           <p className="intro__kicker">Build with AI: Code for Communities · civic intelligence prototype</p>
@@ -45,6 +48,7 @@ export function Intro() {
         </div>
         <IntroMap />
       </div>
+      <HeroTicker />
     </main>
   )
 }

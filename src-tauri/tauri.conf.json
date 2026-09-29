@@ -15,8 +15,8 @@
         "title": "Unheard",
         "width": 1440,
         "height": 900,
-        "minWidth": 1180,
-        "minHeight": 720,
+        "minWidth": 900,
+        "minHeight": 600,
         "center": true,
         "backgroundColor": "#000000"
       }

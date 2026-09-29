@@ -50,7 +50,11 @@ export const IntroMap = memo(function IntroMap() {
       const u = byId[f.properties.id]?.unheard_index ?? 0
       return { id: f.properties.id, d, r, hot: u >= 45 }
     })
-    return { paths, h: Math.ceil(maxY) + 4, hotCount: ranked.filter((d) => (d.unheard_index ?? 0) >= 45).length }
+    const pulses = ranked.slice(0, 10).map((d, i) => {
+      const [x, y] = project([d.lng, d.lat])
+      return { id: d.id, x, y, i }
+    })
+    return { paths, pulses, h: Math.ceil(maxY) + 4, hotCount: ranked.filter((d) => (d.unheard_index ?? 0) >= 45).length }
   }, [geo, byId])
 
   if (!model) return <div className="intro-map intro-map--loading" aria-hidden="true" />
@@ -73,6 +77,15 @@ export const IntroMap = memo(function IntroMap() {
                 style={{ animationDelay: `${900 + Math.min(p.r!, 180) * 14}ms` }}
               />
             ))}
+        </g>
+        <g className="intro-map__pulses">
+          {model.pulses.map((p) => (
+            <g key={p.id} transform={`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`}>
+              <circle className="intro-map__ring" r="14" style={{ animationDelay: `${3200 + p.i * 330}ms` }} />
+              <circle className="intro-map__ring" r="14" style={{ animationDelay: `${4800 + p.i * 330}ms` }} />
+              <circle className="intro-map__dot" r="2.4" style={{ animationDelay: `${3000 + p.i * 120}ms` }} />
+            </g>
+          ))}
         </g>
       </svg>
       <figcaption>

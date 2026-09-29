@@ -1,5 +1,21 @@
 # Changelog
 
+## v3 — free map movement, responsive layout, animated landing and map backdrop
+
+### Fixed
+- **Map could not be dragged sideways** and west India was hidden under the side panel on smaller windows: map bounds were too tight. The map now pans freely in every direction and always fits India beside the panel.
+- **Layout cut off on smaller windows / high display scaling**: the top bar wraps, the side panel narrows, and the dossier becomes an overlay below 1180 px. Works from 900×600 up; the desktop window minimum is now 900×600.
+- An interrupted demo could leave a demo signal on the map; demo signals are now cleared automatically on startup.
+
+### New
+- **Living map backdrop**: behind the (now transparent) map, a sea of points anchored to latitude/longitude with a slow swell and long waves rolling in from the south-west, plus a dotted graticule with degree labels. It pans and zooms with the map, follows Night/Day, starts only after the map has drawn, and is batched to a handful of draw calls per frame.
+- **Collapsible side panel** (‹ button on the panel; "› Panel" to bring it back).
+- **Animated landing page**: a live lattice of points with a slow swell and ripples (a report being heard), pulsing rings on the ten highest-Unheard districts, and a continuously scrolling ticker of real district scores. Respects reduced-motion settings.
+
+### Verified
+- New `scripts/qa_responsive.mjs`: at 900×600, 1024×700, 1280×720, 1366×768, 1440×900 and 1920×1080 — India fully visible beside the panel, drag-pan in all four directions, panel collapse/expand, Ask-the-map and dossier fit, no page errors (all pass).
+- Voice capture tested inside the packaged desktop app with a simulated microphone: recording → 16 kHz WAV → backend.
+
 ## v2 — visual upgrade, search fix, hardening
 
 ### Fixed
