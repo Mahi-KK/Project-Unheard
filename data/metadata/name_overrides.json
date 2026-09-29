@@ -1,0 +1,71 @@
+{
+  "_note": "Manual NFHS-5 district name -> boundary-file district name. Keys are 'NFHS state|NFHS district'. Reviewed by hand; renamed districts only.",
+  "Andhra Pradesh|Sri Potti Sriramulu Nellore": "S.P.S. Nellore",
+  "Arunachal Pradesh|Dibang Valley": "Upper Dibang Valley",
+  "Bihar|Buxer": "Buxar",
+  "Bihar|Pashchim Champaran": "West Champaran",
+  "Bihar|Purba Champaran": "East Champaran",
+  "Chhattisgarh|Dantewada": "Dakshin Bastar Dantewada",
+  "Gujarat|Dahod": "Dohad",
+  "Haryana|Gurgaon": "Gurugram",
+  "Haryana|Mewat": "Nuh",
+  "Karnataka|Bangalore": "Bengaluru",
+  "Karnataka|Bangalore Rural": "Bengaluru Rural",
+  "Karnataka|Belgaum": "Belagavi",
+  "Karnataka|Bellary": "Ballari",
+  "Karnataka|Bijapur": "Vijayapura",
+  "Karnataka|Gulbarga": "Kalaburagi",
+  "Karnataka|Mysore": "Mysuru",
+  "Karnataka|Shimoga": "Shivamogga",
+  "Karnataka|Tumkur": "Tumakuru",
+  "Ladakh|Leh(Ladakh)": "Leh",
+  "Madhya Pradesh|Khandwa (East Nimar)": "East Nimar",
+  "Madhya Pradesh|Khargone (West Nimar)": "West Nimar",
+  "NCT Delhi|Central": "Central Delhi",
+  "NCT Delhi|East": "East Delhi",
+  "NCT Delhi|North": "North Delhi",
+  "NCT Delhi|North East": "North East Delhi",
+  "NCT Delhi|North West": "North West Delhi",
+  "NCT Delhi|South": "South Delhi",
+  "NCT Delhi|South East": "South East Delhi",
+  "NCT Delhi|South West": "South West Delhi",
+  "NCT Delhi|West": "West Delhi",
+  "Punjab|Muktsar": "Sri Muktsar Sahib",
+  "Punjab|Sahibzada Ajit Singh Nagar": "S.A.S. Nagar",
+  "Telangana|Jayashankar Bhupalapally": "Jayashankar",
+  "Tripura|Unakoti": "Unokoti",
+  "Uttar Pradesh|Jyotiba Phule Nagar": "Amroha",
+  "Uttar Pradesh|Kanshiram Nagar": "Kasganj",
+  "Uttar Pradesh|Mahamaya Nagar": "Hathras",
+  "Uttar Pradesh|Sant Ravidas Nagar (Bhadohi)": "Bhadohi",
+  "West Bengal|Haora": "Howrah",
+  "West Bengal|Koch Bihar": "Cooch Behar",
+  "West Bengal|North Twenty Four Parganas": "North 24 Parganas",
+  "West Bengal|Paschim Medinipur": "Medinipur West",
+  "West Bengal|Purba Medinipur": "Medinipur East",
+  "West Bengal|South Twenty Four Parganas": "South 24 Parganas",
+  "_census": {
+    "_note": "Census 2011 'STATE|District' -> [boundary state, boundary district]. null = deliberately not joined (district split after 2011).",
+    "JAMMU AND KASHMIR|Leh(Ladakh)": [
+      "Ladakh",
+      "Leh"
+    ],
+    "JAMMU AND KASHMIR|Kargil": [
+      "Ladakh",
+      "Kargil"
+    ],
+    "PONDICHERRY|PONDICHERRY": [
+      "Puducherry",
+      "Puducherry"
+    ],
+    "UTTAR PRADESH|Allahabad": [
+      "Uttar Pradesh",
+      "Prayagraj"
+    ],
+    "UTTARAKHAND|Garhwal": [
+      "Uttarakhand",
+      "Pauri Garhwal"
+    ],
+    "MEGHALAYA|Jaintia Hills": null
+  }
+}

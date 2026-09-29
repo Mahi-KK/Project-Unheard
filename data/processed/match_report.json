@@ -1,0 +1,554 @@
+{
+ "nfhs_exact": 641,
+ "nfhs_override": [
+  [
+   "Andhra Pradesh",
+   "Sri Potti Sriramulu Nellore",
+   "S.P.S. Nellore"
+  ],
+  [
+   "Arunachal Pradesh",
+   "Dibang Valley",
+   "Upper Dibang Valley"
+  ],
+  [
+   "Bihar",
+   "Buxer",
+   "Buxar"
+  ],
+  [
+   "Bihar",
+   "Pashchim Champaran",
+   "West Champaran"
+  ],
+  [
+   "Bihar",
+   "Purba Champaran",
+   "East Champaran"
+  ],
+  [
+   "Chhattisgarh",
+   "Dantewada",
+   "Dakshin Bastar Dantewada"
+  ],
+  [
+   "Gujarat",
+   "Dahod",
+   "Dohad"
+  ],
+  [
+   "Haryana",
+   "Gurgaon",
+   "Gurugram"
+  ],
+  [
+   "Haryana",
+   "Mewat",
+   "Nuh"
+  ],
+  [
+   "Karnataka",
+   "Bangalore",
+   "Bengaluru"
+  ],
+  [
+   "Karnataka",
+   "Bangalore Rural",
+   "Bengaluru Rural"
+  ],
+  [
+   "Karnataka",
+   "Belgaum",
+   "Belagavi"
+  ],
+  [
+   "Karnataka",
+   "Bellary",
+   "Ballari"
+  ],
+  [
+   "Karnataka",
+   "Bijapur",
+   "Vijayapura"
+  ],
+  [
+   "Karnataka",
+   "Gulbarga",
+   "Kalaburagi"
+  ],
+  [
+   "Karnataka",
+   "Mysore",
+   "Mysuru"
+  ],
+  [
+   "Karnataka",
+   "Shimoga",
+   "Shivamogga"
+  ],
+  [
+   "Karnataka",
+   "Tumkur",
+   "Tumakuru"
+  ],
+  [
+   "Ladakh",
+   "Leh(Ladakh)",
+   "Leh"
+  ],
+  [
+   "Madhya Pradesh",
+   "Khandwa (East Nimar)",
+   "East Nimar"
+  ],
+  [
+   "Madhya Pradesh",
+   "Khargone (West Nimar)",
+   "West Nimar"
+  ],
+  [
+   "NCT Delhi",
+   "Central",
+   "Central Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "East",
+   "East Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "North",
+   "North Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "North East",
+   "North East Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "North West",
+   "North West Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "South",
+   "South Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "South East",
+   "South East Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "South West",
+   "South West Delhi"
+  ],
+  [
+   "NCT Delhi",
+   "West",
+   "West Delhi"
+  ],
+  [
+   "Punjab",
+   "Muktsar",
+   "Sri Muktsar Sahib"
+  ],
+  [
+   "Punjab",
+   "Sahibzada Ajit Singh Nagar",
+   "S.A.S. Nagar"
+  ],
+  [
+   "Telangana",
+   "Jayashankar Bhupalapally",
+   "Jayashankar"
+  ],
+  [
+   "Tripura",
+   "Unakoti",
+   "Unokoti"
+  ],
+  [
+   "Uttar Pradesh",
+   "Jyotiba Phule Nagar",
+   "Amroha"
+  ],
+  [
+   "Uttar Pradesh",
+   "Kanshiram Nagar",
+   "Kasganj"
+  ],
+  [
+   "Uttar Pradesh",
+   "Mahamaya Nagar",
+   "Hathras"
+  ],
+  [
+   "Uttar Pradesh",
+   "Sant Ravidas Nagar (Bhadohi)",
+   "Bhadohi"
+  ],
+  [
+   "West Bengal",
+   "Haora",
+   "Howrah"
+  ],
+  [
+   "West Bengal",
+   "Koch Bihar",
+   "Cooch Behar"
+  ],
+  [
+   "West Bengal",
+   "North Twenty Four Parganas",
+   "North 24 Parganas"
+  ],
+  [
+   "West Bengal",
+   "Paschim Medinipur",
+   "Medinipur West"
+  ],
+  [
+   "West Bengal",
+   "Purba Medinipur",
+   "Medinipur East"
+  ],
+  [
+   "West Bengal",
+   "South Twenty Four Parganas",
+   "South 24 Parganas"
+  ]
+ ],
+ "nfhs_fuzzy": [
+  [
+   "Andaman Nicobar Islands",
+   "Nicobar",
+   "Nicobars"
+  ],
+  [
+   "Chhattisgarh",
+   "Bemetara",
+   "Bametara"
+  ],
+  [
+   "Chhattisgarh",
+   "Gariyaband",
+   "Gariaband"
+  ],
+  [
+   "Chhattisgarh",
+   "Kodagaon",
+   "Kondagaon"
+  ],
+  [
+   "Gujarat",
+   "Ahmedabad",
+   "Ahmadabad"
+  ],
+  [
+   "Gujarat",
+   "Aravali",
+   "Aravalli"
+  ],
+  [
+   "Gujarat",
+   "Chhota Udaipur",
+   "Chota Udaipur"
+  ],
+  [
+   "Gujarat",
+   "Panchmahal",
+   "Panch Mahals"
+  ],
+  [
+   "Karnataka",
+   "Bagalkot",
+   "Bagalkote"
+  ],
+  [
+   "Karnataka",
+   "Chamarajanagar",
+   "Chamarajanagara"
+  ],
+  [
+   "Karnataka",
+   "Chikmagalur",
+   "Chikkamagaluru"
+  ],
+  [
+   "Meghalaya",
+   "East Jantia Hills",
+   "East Jaintia Hills"
+  ],
+  [
+   "Mizoram",
+   "Aizawl",
+   "Aizawal"
+  ],
+  [
+   "Rajasthan",
+   "Jhunjhunun",
+   "Jhunjhunu"
+  ],
+  [
+   "Telangana",
+   "Komaram Bheem Asifabad",
+   "Kumuram Bheem Asifabad"
+  ],
+  [
+   "Tripura",
+   "Sepahijala",
+   "Sipahijala"
+  ],
+  [
+   "Uttarakhand",
+   "Hardwar",
+   "Haridwar"
+  ],
+  [
+   "West Bengal",
+   "Paschim Barddhaman",
+   "Paschim Bardhaman"
+  ],
+  [
+   "West Bengal",
+   "Purba Barddhaman",
+   "Purba Bardhaman"
+  ],
+  [
+   "West Bengal",
+   "Puruliya",
+   "Purulia"
+  ]
+ ],
+ "nfhs_unmatched": [],
+ "census_matched": 623,
+ "census_fuzzy": [
+  [
+   "UTTARAKHAND",
+   "Hardwar",
+   "Haridwar"
+  ],
+  [
+   "RAJASTHAN",
+   "Jhunjhunun",
+   "Jhunjhunu"
+  ],
+  [
+   "MIZORAM",
+   "Aizawl",
+   "Aizawal"
+  ],
+  [
+   "WEST BENGAL",
+   "Puruliya",
+   "Purulia"
+  ],
+  [
+   "KARNATAKA",
+   "Bagalkot",
+   "Bagalkote"
+  ],
+  [
+   "KARNATAKA",
+   "Chikmagalur",
+   "Chikkamagaluru"
+  ],
+  [
+   "KARNATAKA",
+   "Chamarajanagar",
+   "Chamarajanagara"
+  ]
+ ],
+ "census_unmatched": [
+  [
+   "MEGHALAYA",
+   "Jaintia Hills"
+  ],
+  [
+   "WEST BENGAL",
+   "Barddhaman"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Adilabad"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Nizamabad"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Karimnagar"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Medak"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Hyderabad"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Rangareddy"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Mahbubnagar"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Nalgonda"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Warangal"
+  ],
+  [
+   "ANDHRA PRADESH",
+   "Khammam"
+  ],
+  [
+   "TAMIL NADU",
+   "Chennai"
+  ],
+  [
+   "TAMIL NADU",
+   "Kancheepuram"
+  ],
+  [
+   "TAMIL NADU",
+   "Vellore"
+  ],
+  [
+   "TAMIL NADU",
+   "Viluppuram"
+  ],
+  [
+   "TAMIL NADU",
+   "Tirunelveli"
+  ]
+ ],
+ "boundary_without_data": [
+  [
+   "Mizoram",
+   "Khawzawl"
+  ],
+  [
+   "Mizoram",
+   "Hnahthial"
+  ],
+  [
+   "Tamil Nadu",
+   "Kallakurichi"
+  ],
+  [
+   "Tamil Nadu",
+   "Tenkasi"
+  ],
+  [
+   "Tamil Nadu",
+   "Ranipet"
+  ],
+  [
+   "Tamil Nadu",
+   "Tirupathur"
+  ],
+  [
+   "Tamil Nadu",
+   "Chengalpattu"
+  ],
+  [
+   "Telangana",
+   "Mulugu"
+  ],
+  [
+   "West Bengal",
+   "Jhargram"
+  ],
+  [
+   "Lakshadweep",
+   "Lakshadweep"
+  ],
+  [
+   "Telangana",
+   "Narayanpet"
+  ],
+  [
+   "Manipur",
+   "Kamjong"
+  ],
+  [
+   "Manipur",
+   "Kakching"
+  ],
+  [
+   "Manipur",
+   "Jiribam"
+  ],
+  [
+   "Manipur",
+   "Kangpokpi"
+  ],
+  [
+   "Manipur",
+   "Tengnoupal"
+  ],
+  [
+   "Manipur",
+   "Noney"
+  ],
+  [
+   "Manipur",
+   "Pherzawl"
+  ],
+  [
+   "Arunachal Pradesh",
+   "Lower Siang"
+  ],
+  [
+   "Arunachal Pradesh",
+   "Shi Yomi"
+  ],
+  [
+   "Arunachal Pradesh",
+   "Pakke Kessang"
+  ],
+  [
+   "Arunachal Pradesh",
+   "Lepa Rada"
+  ],
+  [
+   "Arunachal Pradesh",
+   "Kamle"
+  ],
+  [
+   "West Bengal",
+   "Alipurduar"
+  ],
+  [
+   "West Bengal",
+   "Kalimpong"
+  ],
+  [
+   "Chandigarh",
+   "Chandigarh"
+  ],
+  [
+   "Madhya Pradesh",
+   "Niwari"
+  ],
+  [
+   "Jammu and Kashmir",
+   "Muzaffarabad"
+  ],
+  [
+   "Jammu and Kashmir",
+   "Mirpur"
+  ]
+ ]
+}

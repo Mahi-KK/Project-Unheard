@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+src-tauri
+backend/.venv
+backend/tests
+data/raw
+**/__pycache__
+.env
+backend/.env

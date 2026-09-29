@@ -1,0 +1,36 @@
+{
+  "_note": "SYNTHETIC DEMONSTRATION SIGNAL templates. Written by the UNHEARD team to demonstrate the pipeline. They are not real citizen complaints and must always be displayed with the SYNTHETIC label.",
+  "language_by_state": {
+    "Karnataka": ["kn", "en"],
+    "Uttar Pradesh": ["hi", "en"], "Bihar": ["hi", "en"], "Madhya Pradesh": ["hi", "en"], "Rajasthan": ["hi", "en"],
+    "Jharkhand": ["hi", "en"], "Chhattisgarh": ["hi", "en"], "Haryana": ["hi", "en"], "Uttarakhand": ["hi", "en"],
+    "Himachal Pradesh": ["hi", "en"], "Delhi": ["hi", "en"]
+  },
+  "templates": {
+    "water": {
+      "en": ["Water supply in our area is irregular, especially in summer.", "Our hand pump has been broken for two months and we walk far for water."],
+      "hi": ["हमारे गाँव में गर्मियों में पीने के पानी की बहुत कमी होती है।", "हैंडपंप दो महीने से खराब है, पानी के लिए दूर जाना पड़ता है।"],
+      "kn": ["ನಮ್ಮ ಊರಲ್ಲಿ ಬೇಸಿಗೆಯಲ್ಲಿ ನೀರಿನ ಸಮಸ್ಯೆ ತುಂಬಾ ಆಗುತ್ತದೆ.", "ಕೊಳವೆ ಬಾವಿ ಕೆಟ್ಟು ಹೋಗಿದೆ, ನೀರಿಗಾಗಿ ದೂರ ಹೋಗಬೇಕು."]
+    },
+    "sanitation": {
+      "en": ["The community toilet near the school has not been cleaned for weeks.", "There is no drainage in our lane and water collects after rain."],
+      "hi": ["हमारी बस्ती में शौचालय की सुविधा नहीं है।", "गली में नाली नहीं है, बारिश के बाद पानी भर जाता है।"],
+      "kn": ["ನಮ್ಮ ಬಡಾವಣೆಯಲ್ಲಿ ಶೌಚಾಲಯದ ವ್ಯವಸ್ಥೆ ಇಲ್ಲ.", "ಚರಂಡಿ ಇಲ್ಲದ ಕಾರಣ ಮಳೆ ನೀರು ನಿಲ್ಲುತ್ತದೆ."]
+    },
+    "health": {
+      "en": ["The nearest health centre is too far for pregnant women to reach.", "The sub-centre is often closed and there is no nurse."],
+      "hi": ["नज़दीकी स्वास्थ्य केंद्र बहुत दूर है, गर्भवती महिलाओं को दिक्कत होती है।", "उप-स्वास्थ्य केंद्र अक्सर बंद रहता है।"],
+      "kn": ["ಹತ್ತಿರದ ಆರೋಗ್ಯ ಕೇಂದ್ರ ತುಂಬಾ ದೂರದಲ್ಲಿದೆ.", "ಉಪ ಆರೋಗ್ಯ ಕೇಂದ್ರದಲ್ಲಿ ದಾದಿ ಇರುವುದಿಲ್ಲ."]
+    },
+    "education": {
+      "en": ["Girls stop going to school after class 8 because the high school is far.", "Our school has only two teachers for five classes."],
+      "hi": ["हाई स्कूल दूर होने से लड़कियाँ आठवीं के बाद पढ़ाई छोड़ देती हैं।", "स्कूल में पाँच कक्षाओं के लिए सिर्फ दो शिक्षक हैं।"],
+      "kn": ["ಪ್ರೌಢಶಾಲೆ ದೂರ ಇರುವುದರಿಂದ ಹೆಣ್ಣುಮಕ್ಕಳು ಶಾಲೆ ಬಿಡುತ್ತಾರೆ.", "ಶಾಲೆಯಲ್ಲಿ ಐದು ತರಗತಿಗಳಿಗೆ ಇಬ್ಬರೇ ಶಿಕ್ಷಕರು."]
+    },
+    "energy": {
+      "en": ["We still cook with firewood; the gas connection has not reached us.", "Power cuts last most of the evening in our village."],
+      "hi": ["हम अब भी लकड़ी पर खाना बनाते हैं, गैस कनेक्शन नहीं मिला।", "गाँव में शाम को ज़्यादातर बिजली नहीं रहती।"],
+      "kn": ["ನಾವು ಇನ್ನೂ ಸೌದೆಯಲ್ಲಿ ಅಡುಗೆ ಮಾಡುತ್ತೇವೆ, ಗ್ಯಾಸ್ ಸಂಪರ್ಕ ಸಿಕ್ಕಿಲ್ಲ.", "ಸಂಜೆ ಹೊತ್ತು ನಮ್ಮ ಹಳ್ಳಿಯಲ್ಲಿ ವಿದ್ಯುತ್ ಇರುವುದಿಲ್ಲ."]
+    }
+  }
+}

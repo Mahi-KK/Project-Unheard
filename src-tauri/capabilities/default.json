@@ -1,0 +1,11 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Main window: backend discovery, save-dialog PDF export, open exported PDF in the system viewer.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:allow-save",
+    { "identifier": "opener:allow-open-path", "allow": [{ "path": "**/*.pdf" }] }
+  ]
+}

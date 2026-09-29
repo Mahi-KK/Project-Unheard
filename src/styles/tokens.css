@@ -1,0 +1,101 @@
+/* UNHEARD design tokens.
+   Foundation: AI Garage design system (palette, type families, 4px spacing,
+   radius set, motion durations). Re-applied to a civic geospatial product.
+   Rule: components reference these tokens only — no raw hex/px elsewhere. */
+
+:root {
+  /* ---- palette (the only colours in the product) ---- */
+  --c-bg: #f0f0ee;          /* --bg3 background */
+  --c-ink: #000000;         /* color-1 primary dark */
+  --c-accent: #ff7a17;      /* color-4 accent: Unheard signal, primary CTA */
+  --c-accent-soft: #ffc285; /* color-5 light accent: lower Unheard band */
+  --c-dim: #7d8187;         /* --text-dim: decorative / large text only */
+  --c-dim-2: #858990;       /* color-3: secondary text on dark surfaces */
+  --c-line: #e4e5e9;        /* --border */
+  --c-surface: #e8e8e8;     /* color-8 surface */
+  --c-mist: #dadbdf;        /* color-6 */
+  --c-paper: #ffffff;       /* color-10 */
+
+  /* Contrast policy (WCAG 2.2 AA):
+     - text on --c-bg / --c-paper / --c-surface is always --c-ink (>= 15:1)
+     - --c-dim is used for rules, glyph ornaments and >= 24px text only (3.5:1)
+     - on --c-ink, secondary text uses --c-dim-2 (5.9:1) or --c-mist (14:1)
+     - --c-accent is never used for text on light backgrounds; text placed ON
+       accent fills is --c-ink (8.6:1). */
+
+  /* ---- type ---- */
+  --f-serif: 'Instrument Serif', 'Times New Roman', serif;
+  --f-sans: 'Geist Sans', 'Geist', ui-sans-serif, system-ui, 'Segoe UI', Arial, sans-serif;
+  --f-mono: 'Geist Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+
+  --t-base: 11px;   /* text-base: mono labels */
+  --t-lg: 12px;     /* text-lg */
+  --t-xl: 13px;     /* text-xl: body */
+  --t-2xl: 15px;    /* text-2xl */
+  --t-3xl: 18px;    /* text-3xl */
+  --t-4xl: 23px;    /* text-4xl */
+  --t-9: 26px;
+  --t-10: 32px;
+  --t-11: 39px;
+  --t-12: 42px;
+  --t-13: 50px;
+
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-strong: 650;
+
+  --lh-tight: 1.05;
+  --lh-snug: 1.3;
+  --lh-body: 1.55;
+
+  /* ---- spacing (4px base; names follow the DS scale) ---- */
+  --s-1: 1px;
+  --s-2: 2px;
+  --s-4: 4px;
+  --s-6: 6px;
+  --s-8: 8px;
+  --s-10: 10px;
+  --s-12: 12px;
+  --s-13: 14px;
+  --s-14: 16px;
+  --s-17: 20px;
+  --s-18: 24px;
+  --s-20: 33px;
+  --s-22: 48px;
+  --s-23: 56px;
+  --s-25: 64px;
+  --s-27: 81px;
+  --s-28: 112px;
+
+  /* ---- radius (pinned to the DS set) ---- */
+  --r-md: 4px;
+  --r-xl: 6px;
+  --r-pill: 999px;
+  --r-round: 50%;
+
+  /* ---- elevation (DS shadow-lg / shadow-13, used sparingly) ---- */
+  --e-hard: 2px 2px 0 0 var(--c-ink);
+  --e-float: rgba(0, 0, 0, 0.28) 0 1px 2px 0, rgba(0, 0, 0, 0.32) 0 7px 12px 0;
+
+  /* ---- motion (DS durations) ---- */
+  --d-fast: 0.12s;
+  --d-quick: 0.15s;
+  --d-base: 0.25s;
+  --d-slow: 0.5s;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---- layout ---- */
+  --bar-h: 56px;
+  --rail-w: 360px;
+  --dossier-w: 480px;
+  --focus-ring: 0 0 0 2px var(--c-paper), 0 0 0 4px var(--c-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0s;
+    --d-quick: 0s;
+    --d-base: 0s;
+    --d-slow: 0s;
+  }
+}

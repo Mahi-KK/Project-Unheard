@@ -1,0 +1,49 @@
+{
+  "version": "unheard-model-1.0",
+  "description": "Deterministic Unheard Index model. Need = weighted public-indicator deficits; Demand = citizen-signal rate percentile; Unheard = Need x (1 - Demand/100). All weights are explicit and editable here.",
+  "composite_weights": { "category_need": 0.75, "vulnerability": 0.15, "exposure": 0.10 },
+  "category_weights": { "water": 1, "sanitation": 1, "health": 1, "education": 1, "energy": 1 },
+  "categories": {
+    "water": { "label": "Water access", "available": true },
+    "sanitation": { "label": "Sanitation", "available": true },
+    "health": { "label": "Health access", "available": true },
+    "education": { "label": "Education", "available": true },
+    "energy": { "label": "Energy & clean fuel", "available": true },
+    "roads": { "label": "Road connectivity", "available": false, "unavailable_reason": "District-level PMGSY / road-density extract not yet integrated. Shown as UNAVAILABLE rather than estimated." }
+  },
+  "indicators": [
+    { "key": "water_improved", "category": "water", "label": "Population in households with an improved drinking-water source", "unit": "%", "direction": "lower_worse", "weight": 0.6, "source_id": "nfhs5", "nfhs_no": 8 },
+    { "key": "water_away", "category": "water", "label": "Households whose drinking-water source is away from premises", "unit": "%", "direction": "higher_worse", "weight": 0.4, "source_id": "census2011" },
+    { "key": "sanitation_improved", "category": "sanitation", "label": "Population in households using an improved sanitation facility", "unit": "%", "direction": "lower_worse", "weight": 1.0, "source_id": "nfhs5", "nfhs_no": 9 },
+    { "key": "electricity", "category": "energy", "label": "Population in households with electricity", "unit": "%", "direction": "lower_worse", "weight": 0.4, "source_id": "nfhs5", "nfhs_no": 7 },
+    { "key": "clean_fuel", "category": "energy", "label": "Households using clean fuel for cooking", "unit": "%", "direction": "lower_worse", "weight": 0.6, "source_id": "nfhs5", "nfhs_no": 10 },
+    { "key": "women_literate", "category": "education", "label": "Women who are literate", "unit": "%", "direction": "lower_worse", "weight": 0.35, "source_id": "nfhs5", "nfhs_no": 14 },
+    { "key": "women_10yrs_school", "category": "education", "label": "Women with 10 or more years of schooling", "unit": "%", "direction": "lower_worse", "weight": 0.35, "source_id": "nfhs5", "nfhs_no": 15 },
+    { "key": "female_ever_school", "category": "education", "label": "Female population age 6+ who ever attended school", "unit": "%", "direction": "lower_worse", "weight": 0.15, "source_id": "nfhs5", "nfhs_no": 1 },
+    { "key": "preprimary", "category": "education", "label": "Children age 5 who attended pre-primary school (2019-20)", "unit": "%", "direction": "lower_worse", "weight": 0.15, "source_id": "nfhs5", "nfhs_no": 13 },
+    { "key": "institutional_births", "category": "health", "label": "Institutional births", "unit": "%", "direction": "lower_worse", "weight": 0.25, "source_id": "nfhs5", "nfhs_no": 42 },
+    { "key": "fully_vaccinated", "category": "health", "label": "Children 12-23 months fully vaccinated", "unit": "%", "direction": "lower_worse", "weight": 0.25, "source_id": "nfhs5", "nfhs_no": 49 },
+    { "key": "health_insurance", "category": "health", "label": "Households with any member covered by a health insurance/financing scheme", "unit": "%", "direction": "lower_worse", "weight": 0.15, "source_id": "nfhs5", "nfhs_no": 12 },
+    { "key": "stunting", "category": "health", "label": "Children under 5 who are stunted", "unit": "%", "direction": "higher_worse", "weight": 0.2, "source_id": "nfhs5", "nfhs_no": 73 },
+    { "key": "anaemia_women", "category": "health", "label": "All women age 15-49 who are anaemic", "unit": "%", "direction": "higher_worse", "weight": 0.15, "source_id": "nfhs5", "nfhs_no": 84 }
+  ],
+  "vulnerability_indicators": [
+    { "key": "sc_st_share", "label": "Scheduled Caste + Scheduled Tribe population share", "unit": "%", "direction": "higher_worse", "weight": 0.5, "source_id": "census2011" },
+    { "key": "rural_share", "label": "Rural households share", "unit": "%", "direction": "higher_worse", "weight": 0.25, "source_id": "census2011" },
+    { "key": "under15", "label": "Population below age 15", "unit": "%", "direction": "higher_worse", "weight": 0.25, "source_id": "nfhs5", "nfhs_no": 2 }
+  ],
+  "exposure": { "label": "Population exposure (log10 of Census 2011 population, min-max scaled)", "source_id": "census2011" },
+  "interventions": {
+    "water": { "label": "Piped water / community water-supply scheme", "primary_indicator": "water_improved", "default_capacity": 2000, "unit_cost_cr": 0.6, "unit": "scheme" },
+    "sanitation": { "label": "Community sanitation complex + household toilet drive", "primary_indicator": "sanitation_improved", "default_capacity": 600, "unit_cost_cr": 0.2, "unit": "facility" },
+    "health": { "label": "Health and Wellness Centre / sub-centre upgrade", "primary_indicator": "institutional_births", "default_capacity": 5000, "unit_cost_cr": 1.5, "unit": "centre" },
+    "education": { "label": "Secondary school upgrade (girls retention focus)", "primary_indicator": "women_10yrs_school", "default_capacity": 1500, "unit_cost_cr": 2.0, "unit": "school" },
+    "energy": { "label": "Clean cooking fuel connection drive", "primary_indicator": "clean_fuel", "default_capacity": 3000, "unit_cost_cr": 0.5, "unit": "drive block" }
+  },
+  "intervention_cost_note": "ILLUSTRATIVE ASSUMPTION. Capacities and unit costs are placeholder planning figures for demonstrating the simulator, not official Schedule-of-Rates costs. Replace with state SoR / scheme norms before any real use.",
+  "synthetic_demand": {
+    "seed": 20260929,
+    "base_reports_per_100k": { "water": 38, "sanitation": 22, "health": 30, "education": 18, "energy": 16 },
+    "note": "SYNTHETIC DEMONSTRATION SIGNAL. Counts are generated, not collected. Generator assumption: reporting propensity rises with digital access (Census 2011 household phone share) and urbanisation, and only weakly with underlying need. This demonstrates the pipeline; it is not evidence that under-reporting exists in any district."
+  }
+}

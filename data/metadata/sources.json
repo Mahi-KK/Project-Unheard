@@ -1,0 +1,49 @@
+{
+  "nfhs5": {
+    "id": "nfhs5",
+    "short": "NFHS-5",
+    "dataset": "National Family Health Survey (NFHS-5), District Fact Sheets",
+    "publisher": "International Institute for Population Sciences (IIPS) & Ministry of Health and Family Welfare, Government of India",
+    "year": "2019-21",
+    "coverage": "705 districts across 28 States and 8 Union Territories (fieldwork 2019-21)",
+    "extraction": "Machine-readable extract by J. Varghese, github.com/jvargh7/nfhs5_factsheets (MIT licence for the extraction code/data files; values transcribed from official factsheets; maintainer notes values have not been extensively cross-checked).",
+    "official_url": "http://rchiips.org/nfhs/factsheet_NFHS-5.shtml",
+    "retrieved_url": "https://raw.githubusercontent.com/jvargh7/nfhs5_factsheets/main/data%20for%20analysis/districts.csv",
+    "license": "Government of India public statistical release; extraction MIT. Attribute IIPS/MoHFW.",
+    "notes": "Values with inadequate sample size ('*') or not available ('na') are missing, not imputed."
+  },
+  "census2011": {
+    "id": "census2011",
+    "short": "Census 2011",
+    "dataset": "Census of India 2011 — Primary Census Abstract and Houselisting & Housing (district level)",
+    "publisher": "Office of the Registrar General & Census Commissioner, India",
+    "year": "2011",
+    "coverage": "640 Census-2011 districts. Joined only to districts whose boundary is unchanged since 2011; newer districts show population as UNAVAILABLE.",
+    "extraction": "District CSV compiled by github.com/nishusharma1608/India-Census-2011-Analysis (derived from Census of India tables).",
+    "official_url": "https://censusindia.gov.in/",
+    "retrieved_url": "https://raw.githubusercontent.com/nishusharma1608/India-Census-2011-Analysis/master/india-districts-census-2011.csv",
+    "license": "Government of India public statistical release. Compilation repository states no licence; underlying figures are official Census tables.",
+    "notes": "Population is 15 years old. Used for exposure weighting and signal-rate denominators only."
+  },
+  "boundaries": {
+    "id": "boundaries",
+    "short": "District boundaries 2019",
+    "dataset": "Indian district boundaries (734 districts recognised in 2019), TopoJSON",
+    "publisher": "Guneet Narula, based on DataMeet community maps and contributions by Aaditya Dar, Justin Elliot Meyers, Abhijeet",
+    "year": "2019",
+    "coverage": "All India, 734 district polygons (Saitual, Mizoram absent)",
+    "retrieved_url": "https://raw.githubusercontent.com/guneetnarula/indian-district-boundaries/master/topojson/india-districts-2019-734.json",
+    "license": "MIT (repository licence). For visualisation; not an authoritative survey boundary.",
+    "notes": "Includes the full territorial extent of India as depicted by Government of India. Polygons with no statistical data are shown as INSUFFICIENT DATA."
+  },
+  "synthetic_demand": {
+    "id": "synthetic_demand",
+    "short": "SYNTHETIC",
+    "dataset": "SYNTHETIC DEMONSTRATION SIGNAL — generated citizen-report counts",
+    "publisher": "UNHEARD prototype (scripts/build_dataset.py)",
+    "year": "generated",
+    "coverage": "All scored districts",
+    "license": "MIT (this repository)",
+    "notes": "Not collected from citizens. Deterministic seeded generator; see data/metadata/model.json > synthetic_demand. Replace with a real grievance feed (e.g. state CPGRAMS / 1076 / municipal helpline exports) in production."
+  }
+}
