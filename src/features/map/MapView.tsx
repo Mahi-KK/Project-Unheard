@@ -4,16 +4,18 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 // Bundle MapLibre's ES-module worker explicitly (offline-safe inside Tauri).
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { INDIA_BBOX, useStore } from '../../app/store'
+import { CATEGORY_LABEL, INDIA_BBOX, useStore } from '../../app/store'
 import { metricFor, r1 } from '../../services/scoring'
 import type { District, Mode } from '../../types/data'
-import { hatchImage, NEED_STOPS, needColors, readPalette, UNHEARD_HIGH, UNHEARD_MID, unheardColors, type Palette } from './mapStyle'
+import { hatchImage, NEED_STOPS, readPalette, UNHEARD_HIGH, UNHEARD_MID, type MapPalette } from './mapStyle'
 
 maplibregl.setWorkerUrl(workerUrl)
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
+const RAIL_PAD = { top: 40, bottom: 40, left: 420, right: 40 }
 
 type Props = { id: string; name: string; state: string; s: number; n: number; d: number; u: number; top: number; cap: number }
+type Setter = (layer: string, prop: string, value: unknown) => void
 
 function stepExpr(prop: string, colors: string[], stops: number[]): maplibregl.ExpressionSpecification {
   const expr: unknown[] = ['step', ['get', prop], colors[0]]
@@ -21,13 +23,35 @@ function stepExpr(prop: string, colors: string[], stops: number[]): maplibregl.E
   return expr as maplibregl.ExpressionSpecification
 }
 
+/** Colour every layer for the current theme + category (no geometry change). */
+function paint(map: MLMap, p: MapPalette) {
+  const sp = map.setPaintProperty.bind(map) as unknown as Setter
+  sp('bg', 'background-color', p.bg)
+  sp('base', 'fill-color', p.land)
+  sp('need', 'fill-color', stepExpr('n', p.need, NEED_STOPS))
+  sp('unheard-mid', 'fill-color', p.unheard[0])
+  sp('unheard-high', 'fill-color', p.unheard[1])
+  sp('district-lines', 'line-color', p.line)
+  sp('state-lines', 'line-color', p.state)
+  sp('outline', 'line-color', p.outline)
+  sp('top10', 'line-color', p.theme === 'night' ? p.unheard[2] : p.ink)
+  sp('demand-circles', 'circle-color', p.demand)
+  sp('demand-circles', 'circle-stroke-color', p.bg)
+  sp('captured', 'circle-stroke-color', p.theme === 'night' ? p.paper : p.ink)
+  sp('highlight', 'line-color', p.theme === 'night' ? p.paper : p.ink)
+  sp('hover', 'line-color', p.theme === 'night' ? p.paper : p.ink)
+  sp('selected', 'line-color', p.theme === 'night' ? p.paper : p.ink)
+  if (map.hasImage('hatch')) map.removeImage('hatch')
+  map.addImage('hatch', hatchImage(p.hatch))
+}
+
 export function MapView() {
   const container = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MLMap | null>(null)
-  const paletteRef = useRef<Palette | null>(null)
   const markersRef = useRef<maplibregl.Marker[]>([])
   const timersRef = useRef<number[]>([])
   const [ready, setReady] = useState(false)
+  const [failed, setFailed] = useState<string | null>(null)
   const [hover, setHover] = useState<{ x: number; y: number; d: District } | null>(null)
 
   const geo = useStore((s) => s.geo)
@@ -41,6 +65,8 @@ export function MapView() {
   const highlightIds = useStore((s) => s.highlightIds)
   const camera = useStore((s) => s.camera)
   const select = useStore((s) => s.select)
+  const theme = useStore((s) => s.mapTheme)
+  const setTheme = useStore((s) => s.setMapTheme)
 
   const top10 = useMemo(() => {
     return districts
@@ -92,25 +118,32 @@ export function MapView() {
   // --------------------------------------------------------------- init
   useEffect(() => {
     if (!container.current || !geo || mapRef.current) return
-    const p = readPalette()
-    paletteRef.current = p
-    const map = new maplibregl.Map({
-      container: container.current,
-      style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': p.bg } }] },
-      bounds: INDIA_BBOX,
-      fitBoundsOptions: { padding: { top: 24, bottom: 24, left: 400, right: 24 } },
-      minZoom: 3,
-      maxZoom: 9.5,
-      maxBounds: [
-        [55, 0],
-        [110, 42],
-      ],
-      renderWorldCopies: false,
-      attributionControl: false,
-      dragRotate: false,
-      pitchWithRotate: false,
-      touchPitch: false,
-    })
+    const st = useStore.getState()
+    const p = readPalette(st.mapTheme, st.category)
+    let map: MLMap
+    try {
+      map = new maplibregl.Map({
+        container: container.current,
+        style: { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': p.bg } }] },
+        bounds: INDIA_BBOX,
+        fitBoundsOptions: { padding: RAIL_PAD },
+        minZoom: 3,
+        maxZoom: 9.5,
+        maxBounds: [
+          [55, 0],
+          [110, 42],
+        ],
+        renderWorldCopies: false,
+        attributionControl: false,
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+      })
+    } catch (e) {
+      // WebGL unavailable: the rest of the product (ranked list, dossier, simulator) still works.
+      setFailed((e as Error).message || 'WebGL is not available on this device.')
+      return
+    }
     map.touchZoomRotate.disableRotation()
     map.keyboard.disableRotation()
     map.addControl(
@@ -123,59 +156,59 @@ export function MapView() {
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
     mapRef.current = map
     if (import.meta.env.DEV) (window as unknown as { __unheardMap: MLMap }).__unheardMap = map
-    map.on('error', (e) => console.error('[map]', e.error?.message ?? e))
+    map.on('error', (e) => console.warn('[map]', e.error?.message ?? e))
 
     map.on('load', () => {
-      map.addImage('hatch', hatchImage(p))
+      map.addImage('hatch', hatchImage(p.hatch))
       map.addSource('districts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, promoteId: 'id' })
       map.addSource('centroids', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
       map.addSource('states', { type: 'geojson', data: { type: 'Feature', geometry: geo.stateLines, properties: {} } })
       map.addSource('outline', { type: 'geojson', data: { type: 'Feature', geometry: geo.outline, properties: {} } })
 
+      map.addLayer({ id: 'base', type: 'fill', source: 'districts', paint: { 'fill-color': p.land } })
       map.addLayer({ id: 'insufficient', type: 'fill', source: 'districts', filter: ['==', ['get', 's'], 0], paint: { 'fill-pattern': 'hatch' } })
-      map.addLayer({ id: 'base', type: 'fill', source: 'districts', filter: ['==', ['get', 's'], 1], paint: { 'fill-color': p.surface } })
       map.addLayer({
         id: 'need',
         type: 'fill',
         source: 'districts',
         filter: ['==', ['get', 's'], 1],
-        paint: { 'fill-color': stepExpr('n', needColors(p), NEED_STOPS), 'fill-opacity': 0 },
+        paint: { 'fill-color': stepExpr('n', p.need, NEED_STOPS), 'fill-opacity': 0 },
       })
       map.addLayer({
         id: 'unheard-mid',
         type: 'fill',
         source: 'districts',
         filter: ['all', ['==', ['get', 's'], 1], ['>=', ['get', 'u'], UNHEARD_MID], ['<', ['get', 'u'], UNHEARD_HIGH]],
-        paint: { 'fill-color': unheardColors(p)[1], 'fill-opacity': 0 },
+        paint: { 'fill-color': p.unheard[0], 'fill-opacity': 0 },
       })
       map.addLayer({
         id: 'unheard-high',
         type: 'fill',
         source: 'districts',
         filter: ['all', ['==', ['get', 's'], 1], ['>=', ['get', 'u'], UNHEARD_HIGH]],
-        paint: { 'fill-color': unheardColors(p)[2], 'fill-opacity': 0 },
+        paint: { 'fill-color': p.unheard[1], 'fill-opacity': 0 },
       })
-      map.addLayer({ id: 'district-lines', type: 'line', source: 'districts', paint: { 'line-color': p.paper, 'line-width': 0.5 } })
-      map.addLayer({ id: 'state-lines', type: 'line', source: 'states', paint: { 'line-color': p.ink, 'line-width': 0.7, 'line-opacity': 0.55 } })
-      map.addLayer({ id: 'outline', type: 'line', source: 'outline', paint: { 'line-color': p.ink, 'line-width': 1 } })
+      map.addLayer({ id: 'district-lines', type: 'line', source: 'districts', paint: { 'line-color': p.line, 'line-width': 0.5 } })
+      map.addLayer({ id: 'state-lines', type: 'line', source: 'states', paint: { 'line-color': p.state, 'line-width': 0.8, 'line-opacity': 0.8 } })
+      map.addLayer({ id: 'outline', type: 'line', source: 'outline', paint: { 'line-color': p.outline, 'line-width': 1.1 } })
       map.addLayer({
         id: 'top10',
         type: 'line',
         source: 'districts',
         filter: ['>', ['get', 'top'], 0],
-        paint: { 'line-color': p.ink, 'line-width': 1.6, 'line-opacity': 0 },
+        paint: { 'line-color': p.unheard[2], 'line-width': 1.8, 'line-opacity': 0 },
       })
       map.addLayer({
         id: 'demand-circles',
         type: 'circle',
         source: 'centroids',
         paint: {
-          'circle-color': p.ink,
-          'circle-opacity': 0.72,
-          'circle-stroke-color': p.paper,
-          'circle-stroke-width': 0.6,
+          'circle-color': p.demand,
+          'circle-opacity': 0.78,
+          'circle-stroke-color': p.bg,
+          'circle-stroke-width': 0.8,
           'circle-stroke-opacity': 0.9,
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, ['*', 0.045, ['get', 'd']], 7, ['*', 0.11, ['get', 'd']]],
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, ['*', 0.05, ['get', 'd']], 7, ['*', 0.12, ['get', 'd']]],
         },
       })
       map.addLayer({
@@ -183,28 +216,29 @@ export function MapView() {
         type: 'circle',
         source: 'centroids',
         filter: ['>', ['get', 'cap'], 0],
-        paint: { 'circle-color': p.accent, 'circle-radius': 5, 'circle-stroke-color': p.ink, 'circle-stroke-width': 1.5 },
+        paint: { 'circle-color': p.unheard[1], 'circle-radius': 6, 'circle-stroke-color': p.paper, 'circle-stroke-width': 2 },
       })
       map.addLayer({
         id: 'highlight',
         type: 'line',
         source: 'districts',
         filter: ['in', ['get', 'id'], ['literal', []]],
-        paint: { 'line-color': p.ink, 'line-width': 2, 'line-dasharray': [2, 1.5] },
+        paint: { 'line-color': p.paper, 'line-width': 2, 'line-dasharray': [2, 1.5] },
       })
       map.addLayer({
         id: 'hover',
         type: 'line',
         source: 'districts',
-        paint: { 'line-color': p.ink, 'line-width': 1.2, 'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0] },
+        paint: { 'line-color': p.paper, 'line-width': 1.4, 'line-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 1, 0] },
       })
       map.addLayer({
         id: 'selected',
         type: 'line',
         source: 'districts',
         filter: ['==', ['get', 'id'], ''],
-        paint: { 'line-color': p.ink, 'line-width': 2.6 },
+        paint: { 'line-color': p.paper, 'line-width': 3 },
       })
+      paint(map, p)
 
       let hovered: string | null = null
       map.on('mousemove', 'base', (e) => {
@@ -238,10 +272,18 @@ export function MapView() {
     return () => {
       ro.disconnect()
       timersRef.current.forEach(clearTimeout)
+      clearMarkers(markersRef)
       map.remove()
       mapRef.current = null
     }
   }, [geo, select])
+
+  // --------------------------------------------------------------- theme / category colours
+  useEffect(() => {
+    const map = mapRef.current
+    if (!ready || !map) return
+    paint(map, readPalette(theme, category))
+  }, [ready, theme, category])
 
   // --------------------------------------------------------------- data updates
   useEffect(() => {
@@ -256,7 +298,7 @@ export function MapView() {
     const map = mapRef.current
     if (!ready || !map) return
     if (mode === 'unheard' && revealed) return // choreography owns the layers
-    applyMode(map, mode, reducedMotion() ? 0 : 250)
+    applyMode(map, mode, reducedMotion() ? 0 : 300)
     clearMarkers(markersRef)
   }, [ready, mode, revealed])
 
@@ -273,33 +315,34 @@ export function MapView() {
       else timersRef.current.push(window.setTimeout(fn, ms))
     }
     const t = (dur: number, delay = 0) => ({ duration: rm ? 0 : dur, delay: rm ? 0 : delay })
+    const sp = map.setPaintProperty.bind(map) as unknown as Setter
 
     // 1. reported demand fades out: the map goes quiet
-    map.setPaintProperty('demand-circles', 'circle-opacity-transition', t(500))
-    map.setPaintProperty('demand-circles', 'circle-stroke-opacity-transition', t(500))
-    map.setPaintProperty('demand-circles', 'circle-opacity', 0)
-    map.setPaintProperty('demand-circles', 'circle-stroke-opacity', 0)
-    map.setPaintProperty('unheard-mid', 'fill-opacity', 0)
-    map.setPaintProperty('unheard-high', 'fill-opacity', 0)
-    map.setPaintProperty('top10', 'line-opacity', 0)
+    sp('demand-circles', 'circle-opacity-transition', t(500))
+    sp('demand-circles', 'circle-stroke-opacity-transition', t(500))
+    sp('demand-circles', 'circle-opacity', 0)
+    sp('demand-circles', 'circle-stroke-opacity', 0)
+    sp('unheard-mid', 'fill-opacity', 0)
+    sp('unheard-high', 'fill-opacity', 0)
+    sp('top10', 'line-opacity', 0)
 
     // 2. underlying need surfaces
-    map.setPaintProperty('need', 'fill-opacity-transition', t(700, 350))
-    map.setPaintProperty('need', 'fill-opacity', 1)
+    sp('need', 'fill-opacity-transition', t(800, 350))
+    sp('need', 'fill-opacity', 1)
 
-    // 3. need recedes; where need is high and reporting low, the unheard emerges (highest first)
-    at(1700, () => {
-      map.setPaintProperty('need', 'fill-opacity-transition', t(700))
-      map.setPaintProperty('need', 'fill-opacity', 0)
-      map.setPaintProperty('unheard-high', 'fill-opacity-transition', t(600, 100))
-      map.setPaintProperty('unheard-high', 'fill-opacity', 1)
-      map.setPaintProperty('unheard-mid', 'fill-opacity-transition', t(700, 600))
-      map.setPaintProperty('unheard-mid', 'fill-opacity', 1)
-      map.setPaintProperty('top10', 'line-opacity-transition', t(400, 1100))
-      map.setPaintProperty('top10', 'line-opacity', 1)
+    // 3. need recedes; where need is high and reporting low, the unheard emerge (highest first)
+    at(1800, () => {
+      sp('need', 'fill-opacity-transition', t(800))
+      sp('need', 'fill-opacity', 0)
+      sp('unheard-high', 'fill-opacity-transition', t(650, 100))
+      sp('unheard-high', 'fill-opacity', 1)
+      sp('unheard-mid', 'fill-opacity-transition', t(800, 650))
+      sp('unheard-mid', 'fill-opacity', 1)
+      sp('top10', 'line-opacity-transition', t(450, 1150))
+      sp('top10', 'line-opacity', 1)
     })
     // 4. camera settles on the strongest signals; ranks appear
-    at(2500, () => {
+    at(2600, () => {
       const bb = bboxOf(top10)
       if (bb) map.fitBounds(bb, { padding: { top: 140, bottom: 140, left: 520, right: 160 }, duration: rm ? 0 : 1800, maxZoom: 5.4 })
       addRankMarkers(map, top10, markersRef, select, rm)
@@ -332,7 +375,7 @@ export function MapView() {
     map.setFilter('highlight', ['in', ['get', 'id'], ['literal', highlightIds]])
     if (highlightIds.length) {
       const bb = bboxOf(highlightIds.map((id) => useStore.getState().byId[id]).filter(Boolean))
-      if (bb) map.fitBounds(bb, { padding: { top: 80, bottom: 80, left: 420, right: 80 }, duration: reducedMotion() ? 0 : 1200, maxZoom: 6.5 })
+      if (bb) map.fitBounds(bb, { padding: { top: 80, bottom: 80, left: 440, right: 80 }, duration: reducedMotion() ? 0 : 1200, maxZoom: 6.5 })
     }
   }, [ready, highlightIds])
 
@@ -341,35 +384,64 @@ export function MapView() {
     if (!ready || !map || camera.seq === 0 || !camera.bbox) return
     const home = camera.bbox === INDIA_BBOX
     map.fitBounds(camera.bbox, {
-      padding: home ? { top: 24, bottom: 24, left: 400, right: 24 } : { top: 80, bottom: 80, left: 420, right: 80 },
+      padding: home ? RAIL_PAD : { top: 80, bottom: 80, left: 440, right: 80 },
       duration: reducedMotion() ? 0 : 1100,
-      maxZoom: 6.4,
+      maxZoom: 5.9,
     })
   }, [ready, camera])
 
   const hoverValue = hover ? metricFor(hover.d, mode, category) : null
   return (
-    <div className="map-wrap">
+    <div className="map-wrap" data-theme={theme}>
       <div
         ref={container}
         className="map"
         role="application"
         aria-label="Map of India by district. Use arrow keys to pan and plus or minus to zoom. Use the ranked list for keyboard access to districts."
       />
+      {failed && (
+        <div className="map-failed" role="alert">
+          <p className="state__title">MAP UNAVAILABLE</p>
+          <p>The map needs WebGL, which this device did not provide ({failed}). Rankings, dossiers and the simulator still work from the list.</p>
+        </div>
+      )}
+      <div className="map-hud" aria-hidden={false}>
+        <span className="map-hud__label">
+          {mode === 'demand' ? 'Reported demand' : mode === 'need' ? 'Underlying need' : 'Unheard'} · {CATEGORY_LABEL[category]}
+        </span>
+        <div className="map-theme" role="radiogroup" aria-label="Map appearance">
+          {(['night', 'day'] as const).map((t) => (
+            <button key={t} type="button" role="radio" aria-checked={theme === t} onClick={() => setTheme(t)}>
+              {t === 'night' ? 'Night' : 'Day'}
+            </button>
+          ))}
+        </div>
+      </div>
       {hover && (
-        <div className="map-tip" style={{ transform: `translate(${hover.x + 14}px, ${hover.y + 14}px)` }} aria-hidden="true">
+        <div className="map-tip" style={{ transform: `translate(${hover.x + 16}px, ${hover.y + 16}px)` }} aria-hidden="true">
           <div className="map-tip__name">{hover.d.name}</div>
           <div className="map-tip__state">{hover.d.state}</div>
           {hover.d.data_status === 'scored' ? (
-            <div className="map-tip__row">
-              <span>{mode.toUpperCase()}</span>
-              <strong>{r1(hoverValue)}</strong>
-            </div>
+            <>
+              <div className="map-tip__row" data-active={mode === 'unheard'}>
+                <span>Unheard</span>
+                <strong>{r1(metricFor(hover.d, 'unheard', category))}</strong>
+              </div>
+              <div className="map-tip__row" data-active={mode === 'need'}>
+                <span>Need</span>
+                <strong>{r1(metricFor(hover.d, 'need', category))}</strong>
+              </div>
+              <div className="map-tip__row" data-active={mode === 'demand'}>
+                <span>Demand</span>
+                <strong>{r1(metricFor(hover.d, 'demand', category))}</strong>
+              </div>
+            </>
           ) : (
             <div className="map-tip__row">
-              <span>INSUFFICIENT DATA</span>
+              <span>Insufficient data</span>
             </div>
           )}
+          <span className="sr-only">{r1(hoverValue)}</span>
         </div>
       )}
     </div>
@@ -378,12 +450,12 @@ export function MapView() {
 
 function applyMode(map: MLMap, mode: Mode, dur: number) {
   const t = { duration: dur, delay: 0 }
-  const sp = map.setPaintProperty.bind(map) as unknown as (layer: string, prop: string, v: unknown) => void
+  const sp = map.setPaintProperty.bind(map) as unknown as Setter
   const set = (layer: string, prop: string, v: number) => {
     sp(layer, `${prop}-transition`, t)
     sp(layer, prop, v)
   }
-  set('demand-circles', 'circle-opacity', mode === 'demand' ? 0.72 : 0)
+  set('demand-circles', 'circle-opacity', mode === 'demand' ? 0.78 : 0)
   set('demand-circles', 'circle-stroke-opacity', mode === 'demand' ? 0.9 : 0)
   set('need', 'fill-opacity', mode === 'need' ? 1 : 0)
   set('unheard-mid', 'fill-opacity', mode === 'unheard' ? 1 : 0)

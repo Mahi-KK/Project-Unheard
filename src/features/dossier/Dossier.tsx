@@ -126,7 +126,10 @@ function CategoryTable({ d }: { d: District }) {
         <tbody>
           {CATEGORIES.map((c) => (
             <tr key={c}>
-              <th scope="row">{CATEGORY_LABEL[c]}</th>
+              <th scope="row">
+                <i className="catdot" data-cat={c} aria-hidden="true" />
+                {CATEGORY_LABEL[c]}
+              </th>
               <td className="mono">{r1(d.need_by_category?.[c])}</td>
               <td className="mono">{r1(d.demand_by_category?.[c])}</td>
               <td className="mono strong">{r1(d.unheard_by_category?.[c])}</td>
@@ -156,7 +159,10 @@ function Evidence({ d }: { d: District }) {
       <p className="dsec__lede">Raw public values. The bar is the district's deficit relative to the worst (100) and best (0) scored district.</p>
       {groups.map((g) => (
         <div className="evgroup" key={g.key}>
-          <p className="evgroup__title">{g.label}</p>
+          <p className="evgroup__title">
+            <i className="catdot" data-cat={g.key} aria-hidden="true" />
+            {g.label}
+          </p>
           <ul className="evlist">
             {g.defs.map((def) => {
               const v = d.raw[def.key]
@@ -166,7 +172,7 @@ function Evidence({ d }: { d: District }) {
                 <li key={def.key} className="ev">
                   <span className="ev__label">{def.label}</span>
                   <span className="ev__value mono">{v === null || v === undefined ? 'n/a' : `${r1(v)}${def.unit}`}</span>
-                  <span className="ev__bar" aria-label={`deficit ${r1(df)} of 100`}>
+                  <span className="ev__bar" data-cat={g.key} aria-label={`deficit ${r1(df)} of 100`}>
                     <span style={{ width: `${df ?? 0}%` }} />
                   </span>
                   <span className="ev__src">{src.short.includes(src.year) ? src.short : `${src.short} ${src.year}`}</span>

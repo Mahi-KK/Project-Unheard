@@ -16,6 +16,47 @@
   --c-mist: #dadbdf;        /* color-6 */
   --c-paper: #ffffff;       /* color-10 */
 
+  /* ---- data-visualisation extension (map + category encoding) ----
+     The brand palette stays for UI chrome. Data needs more hues than a
+     brand: these are chosen for ordered, colour-blind-aware reading. */
+  --cat-water: #3a86c8;
+  --cat-sanitation: #2fa58b;
+  --cat-health: #d9475b;
+  --cat-education: #7a6cd6;
+  --cat-energy: #e2b228;
+
+  /* night map (default) */
+  --night-bg: #0e0f11;
+  --night-land: #1b1d21;
+  --night-line: #2b2e34;
+  --night-state: #5c616b;
+  --night-outline: #9aa0aa;
+  --night-demand: #3dd6c4;
+  --night-need-0: #1d3a4f;
+  --night-need-1: #22607a;
+  --night-need-2: #2f9a98;
+  --night-need-3: #8fd1a1;
+  --night-need-4: #f3efa6;
+  --night-unheard-1: #7a3410;
+  --night-unheard-2: #ff7a17;
+  --night-unheard-3: #ffc285;
+
+  /* day map */
+  --day-bg: #f0f0ee;
+  --day-land: #e3e4e6;
+  --day-line: #ffffff;
+  --day-state: #3c3f45;
+  --day-outline: #000000;
+  --day-demand: #0e7c7b;
+  --day-need-0: #f7fbd9;
+  --day-need-1: #c3e6b6;
+  --day-need-2: #6cc3bd;
+  --day-need-3: #2b7fb6;
+  --day-need-4: #1f3b86;
+  --day-unheard-1: #ffc285;
+  --day-unheard-2: #ff7a17;
+  --day-unheard-3: #9a3a06;
+
   /* Contrast policy (WCAG 2.2 AA):
      - text on --c-bg / --c-paper / --c-surface is always --c-ink (>= 15:1)
      - --c-dim is used for rules, glyph ornaments and >= 24px text only (3.5:1)

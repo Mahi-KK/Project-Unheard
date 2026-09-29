@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react'
 import { CATEGORY_LABEL, useStore } from '../../app/store'
 import { fmtInt, metricFor, r1 } from '../../services/scoring'
 import { CATEGORIES, type CategoryOrAll, type Mode } from '../../types/data'
-import { NEED_STEPS, UNHEARD_STEPS } from '../map/mapStyle'
+import { NEED_STEPS, readPalette, UNHEARD_STEPS } from '../map/mapStyle'
 
 const COPY: Record<Mode, { kicker: string; title: string; body: string }> = {
   demand: {
@@ -82,7 +82,8 @@ export function Ledger() {
 
       <div className="chips" role="radiogroup" aria-label="Category">
         {(['all', ...CATEGORIES] as CategoryOrAll[]).map((c) => (
-          <button key={c} type="button" role="radio" aria-checked={category === c} className="chip" onClick={() => setCategory(c)}>
+          <button key={c} type="button" role="radio" aria-checked={category === c} className="chip" data-cat={c} onClick={() => setCategory(c)}>
+            <i className="chip__dot" aria-hidden="true" />
             {CATEGORY_LABEL[c]}
           </button>
         ))}
@@ -140,7 +141,7 @@ export function Ledger() {
                 <small>{d.state}</small>
               </span>
               <span className="rankrow__bar" aria-hidden="true">
-                <span data-mode={mode} style={{ width: `${Math.max(2, Math.min(100, v))}%` }} />
+                <span data-mode={mode} data-cat={category} style={{ width: `${Math.max(2, Math.min(100, v))}%` }} />
               </span>
               <span className="rankrow__v">{r1(v)}</span>
             </button>
@@ -177,26 +178,34 @@ export function Ledger() {
 }
 
 function Legend({ mode }: { mode: Mode }) {
+  const theme = useStore((s) => s.mapTheme)
+  const category = useStore((s) => s.category)
+  const p = readPalette(theme, category)
   if (mode === 'demand')
     return (
       <div className="legend" aria-label="Legend: circle size is the demand percentile">
-        <span className="legend__label">Demand percentile</span>
+        <span className="legend__label">Demand percentile · circle size</span>
         <span className="legend__dots" aria-hidden="true">
-          <i style={{ width: 4, height: 4 }} />
-          <i style={{ width: 8, height: 8 }} />
-          <i style={{ width: 12, height: 12 }} />
+          {[5, 9, 14].map((s) => (
+            <i key={s} style={{ width: s, height: s, background: p.demand }} />
+          ))}
         </span>
         <span className="legend__range">0 → 100 · SYNTHETIC baseline</span>
       </div>
     )
   const steps = mode === 'need' ? NEED_STEPS : UNHEARD_STEPS
+  const colors = mode === 'need' ? p.need : [p.land, p.unheard[0], p.unheard[1]]
   return (
     <div className="legend" aria-label={`Legend for ${mode}`}>
       <span className="legend__label">{mode === 'need' ? 'Need score' : 'Unheard index'}</span>
+      <span className="legend__ramp" aria-hidden="true">
+        {colors.map((c, i) => (
+          <i key={i} style={{ background: c }} />
+        ))}
+      </span>
       <span className="legend__steps">
-        {steps.map((s, i) => (
+        {steps.map((s) => (
           <span key={s.label} className="legend__step">
-            <i data-mode={mode} data-step={i} aria-hidden="true" />
             {s.label}
           </span>
         ))}

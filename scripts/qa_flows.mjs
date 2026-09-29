@@ -37,7 +37,7 @@ await page.waitForTimeout(300)
 ok('Escape closes dossier', (await page.locator('.dossier').count()) === 0)
 
 // search combobox
-await page.getByPlaceholder('Find a district').fill('raich')
+await page.getByPlaceholder('Find a district or state').fill('raich')
 await page.keyboard.press('Enter')
 await page.waitForSelector('.dossier')
 ok('search opens Raichur', (await page.locator('#dossier-title').textContent())?.includes('Raichur'))

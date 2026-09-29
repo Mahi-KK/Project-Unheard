@@ -55,6 +55,14 @@ async def http_error_handler(_: Request, exc: HTTPException):
     return JSONResponse(body, status_code=exc.status_code)
 
 
+@app.exception_handler(Exception)
+async def unexpected_error_handler(_: Request, exc: Exception):
+    # Never crash the engine or leak a stack trace to the UI; log it and answer truthfully.
+    log.exception("unhandled error: %s", exc)
+    return JSONResponse({"error_code": "internal_error", "message": f"Unexpected engine error ({type(exc).__name__}). The request was not completed."},
+                        status_code=500)
+
+
 @app.exception_handler(GeminiError)
 async def gemini_error_handler(_: Request, exc: GeminiError):
     return JSONResponse({"error_code": exc.code, "message": exc.message}, status_code=exc.status)

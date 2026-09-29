@@ -3,6 +3,7 @@ import { applyDemand } from '../services/scoring'
 import type { GeoBundle } from '../data/loadDataset'
 import type { AnalyzeOut, Health, MapQueryOut } from '../services/api'
 import type { SimResult } from '../features/simulation/simulate'
+import type { MapTheme } from '../features/map/mapStyle'
 import { CATEGORIES, type ByCategory, type CapturedSignal, type CategoryOrAll, type Dataset, type District, type Mode } from '../types/data'
 
 export type LeftPanel = 'ledger' | 'capture' | 'ask'
@@ -43,8 +44,10 @@ interface State {
   backend: BackendStatus
 
   demo: { active: boolean; step: number }
+  mapTheme: MapTheme
 
   enter: () => void
+  setMapTheme: (t: MapTheme) => void
   setData: (dataset: Dataset, geo: GeoBundle) => void
   setLoadError: (e: string) => void
   setCaptured: (signals: CapturedSignal[]) => void
@@ -73,6 +76,14 @@ function recompute(dataset: Dataset, captured: CapturedSignal[]): District[] {
   const updated = applyDemand(scored, extra)
   const map = new Map(updated.map((d) => [d.id, d]))
   return dataset.districts.map((d) => map.get(d.id) ?? d)
+}
+
+function readTheme(): MapTheme {
+  try {
+    return localStorage.getItem('unheard.mapTheme') === 'day' ? 'day' : 'night'
+  } catch {
+    return 'night'
+  }
 }
 
 export const INDIA_BBOX: [number, number, number, number] = [68.1, 6.5, 97.4, 37.1]
@@ -105,8 +116,17 @@ export const useStore = create<State>((set, get) => ({
   backend: 'starting',
 
   demo: { active: false, step: 0 },
+  mapTheme: readTheme(),
 
   enter: () => set({ phase: 'app' }),
+  setMapTheme: (mapTheme) => {
+    try {
+      localStorage.setItem('unheard.mapTheme', mapTheme)
+    } catch {
+      /* storage unavailable: per-session only */
+    }
+    set({ mapTheme })
+  },
   setData: (dataset, geo) => {
     const districts = recompute(dataset, get().captured)
     set({ dataset, geo, districts, byId: Object.fromEntries(districts.map((d) => [d.id, d])) })
