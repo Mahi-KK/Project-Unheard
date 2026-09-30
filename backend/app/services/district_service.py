@@ -16,7 +16,7 @@ from typing import Any
 
 from . import scoring_service as S
 from ..schemas.gemini import MapQuery
-from ..utils.geo_match import norm_district, norm_state
+from ..utils.geo_match import canon_district, norm_district, norm_state
 
 
 class DistrictService:
@@ -126,12 +126,13 @@ class DistrictService:
         st = norm_state(state) if state else None
         best: dict[str, tuple[float, dict]] = {}
         for name in names:
-            t = norm_district(name)
+            t = canon_district(name)
             if not t:
                 continue
             for d in self._work:
-                n = norm_district(d["name"])
-                s = 1.0 if t == n else difflib.SequenceMatcher(None, t, n).ratio()
+                # match against the current name and the survey-era name (e.g. Bangalore -> Bengaluru)
+                forms = {canon_district(d["name"])} | ({canon_district(d["nfhs_name"])} if d.get("nfhs_name") else set())
+                s = max(1.0 if t == n else difflib.SequenceMatcher(None, t, n).ratio() for n in forms)
                 if st and norm_state(d["state"]) == st:
                     s += 0.08
                 elif st:

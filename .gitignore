@@ -28,5 +28,7 @@ qa-screens/
 .DS_Store
 Thumbs.db
 
-# local tooling
-.claude/
+
+# demo video build output (large)
+submission/video-build/
+submission/*.mp4

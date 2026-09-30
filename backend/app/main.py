@@ -34,7 +34,7 @@ store = Store(settings.db_path)
 districts = DistrictService(settings.data_path, store)
 gemini = GeminiService(settings, store)
 
-app = FastAPI(title="UNHEARD API", version="0.1.0", description="Finding the needs no one reported.")
+app = FastAPI(title="UNHEARD API", version="3.1.0", description="Finding the needs no one reported.")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["GET", "POST", "DELETE"],
                    allow_headers=["Content-Type", "X-Unheard-Token"])
 
@@ -187,11 +187,11 @@ async def analyze_request(body: AnalyzeRequestIn):
             base64.b64decode(body.audio_base64, validate=True)
         except Exception as e:
             raise HTTPException(422, detail={"error_code": "bad_audio", "message": "audio_base64 is not valid base64."}) from e
-    analysis, cached = await gemini.analyze_request(body.text.strip() if body.text else None, body.audio_base64, body.hint_language)
+    analysis, cached, used = await gemini.analyze_request(body.text.strip() if body.text else None, body.audio_base64, body.hint_language)
     for f in ("transcript", "normalized_request", "summary", "urgency_reason"):
         setattr(analysis, f, clean_text(getattr(analysis, f)))
     candidates = districts.resolve(analysis.district, analysis.state, analysis.location_mention)
-    return AnalyzeRequestOut(analysis=analysis, candidates=candidates, model=settings.gemini_model, cached=cached,
+    return AnalyzeRequestOut(analysis=analysis, candidates=candidates, model=used, cached=cached,
                              input_mode="voice" if body.audio_base64 else "text")
 
 
@@ -200,8 +200,8 @@ async def map_query(body: MapQueryIn, allow_local: bool = Query(True)):
     states = sorted({d["state"] for d in districts.all()})
     note = None
     try:
-        q, cached = await gemini.map_query(body.query, states)
-        parsed_by, model = "gemini", settings.gemini_model
+        q, cached, used = await gemini.map_query(body.query, states)
+        parsed_by, model = "gemini", used
     except GeminiError as e:
         if not allow_local:
             raise
@@ -218,7 +218,7 @@ async def map_query(body: MapQueryIn, allow_local: bool = Query(True)):
 async def explain(district_id: str):
     ev = _evidence_or_422(district_id)
     ivs = districts.interventions(district_id)
-    exp, cached = await gemini.explain(ev, ivs)
+    exp, cached, used = await gemini.explain(ev, ivs)
     allowed = collect_numbers(ev) | collect_numbers(ivs)
     removed: list[str] = []
     valid_keys = {i["key"] for i in ev["indicators"]}
@@ -243,7 +243,7 @@ async def explain(district_id: str):
                 rats.append(r)
     exp.intervention_rationales = rats
     exp.caveats = ground_list(exp.caveats, allowed, removed)
-    return ExplainOut(district_id=district_id, explanation=exp, removed_statements=removed, model=settings.gemini_model, cached=cached)
+    return ExplainOut(district_id=district_id, explanation=exp, removed_statements=removed, model=used, cached=cached)
 
 
 @app.post("/api/cluster-signals")
@@ -277,13 +277,13 @@ async def policy_brief(body: PolicyBriefIn):
 
     brief_dict, removed, cached, model = None, [], False, None
     if not body.evidence_sheet_only:
-        brief, cached = await gemini.policy_brief(ev, _round_sim(sim), ivs)
+        brief, cached, used = await gemini.policy_brief(ev, _round_sim(sim), ivs)
         allowed = collect_numbers(ev) | collect_numbers(_round_sim(sim)) | collect_numbers(ivs)
         brief_dict = brief.model_dump()
         for k, v in brief_dict.items():
             brief_dict[k] = ground_list(v, allowed, removed) if isinstance(v, list) else ground_text(v, allowed, removed)
         brief_dict["title"] = brief_dict["title"] or f"{d['name']}: policy brief"
-        model = settings.gemini_model
+        model = used
 
     pdf = policy_service.build_pdf(fonts_dir=settings.fonts_dir, district=d, evidence=ev, sources=districts.meta["sources"], brief=brief_dict,
                                    simulation=sim, interventions=ivs, model_name=model, removed=removed)

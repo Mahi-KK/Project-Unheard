@@ -69,3 +69,21 @@ def best_fuzzy(target: str, candidates: dict[str, str], cutoff: float = 0.86) ->
     if len(hits) == 2 and difflib.SequenceMatcher(None, target, hits[0]).ratio() == difflib.SequenceMatcher(None, target, hits[1]).ratio():
         return None  # ambiguous: refuse to guess
     return candidates[hits[0]]
+
+
+_DIRECTIONS = [
+    (r"\b(pashchimi|pashchim|paschimi|paschim|pachhim)\b", "west"),
+    (r"\b(purbi|purba|poorvi|purvi|purv)\b", "east"),
+    (r"\b(uttari|uttara|uttar)\b", "north"),
+    (r"\b(dakshini|dakshina|dakshin)\b", "south"),
+]
+
+
+def canon_district(name: str) -> str:
+    """Normalise for *runtime* place resolution: also maps Hindi/Sanskrit
+    direction words to English so 'West Singhbhum' == 'Pashchimi Singhbhum'.
+    (Not used by the dataset build, whose joins are already audited.)"""
+    s = _basic(name)
+    for pat, rep in _DIRECTIONS:
+        s = re.sub(pat, rep, s)
+    return norm_district(s)

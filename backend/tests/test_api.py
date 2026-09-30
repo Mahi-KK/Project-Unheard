@@ -62,3 +62,12 @@ def test_signals_change_demand_and_can_be_removed():
 def test_signal_rejected_for_insufficient_district():
     r = c.post("/api/signals", json={"district_id": "chandigarh--chandigarh", "category": "water", "source": "manual", "transcript": "x"})
     assert r.status_code == 422
+
+
+def test_place_resolution_handles_direction_words_and_old_names():
+    from app.main import districts
+
+    assert districts.resolve("West Singhbhum", "Jharkhand", None)[0]["id"] == "jharkhand--pashchimi-singhbhum"
+    assert districts.resolve("East Singhbhum", "Jharkhand", None)[0]["id"] == "jharkhand--purbi-singhbhum"
+    assert districts.resolve("Bangalore", "Karnataka", None)[0]["id"] == "karnataka--bengaluru"
+    assert districts.resolve("Mewat", None, None)[0]["id"] == "haryana--nuh"

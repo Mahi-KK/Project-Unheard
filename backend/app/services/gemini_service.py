@@ -19,6 +19,8 @@ import json
 import logging
 import math
 import random
+import re
+import time
 from typing import Any, TypeVar
 
 from pydantic import BaseModel, ValidationError
@@ -53,7 +55,11 @@ class GeminiService:
     def __init__(self, settings: Settings, store: Store):
         self.settings = settings
         self.store = store
-        self._client = None
+        # google-genai's async client (and asyncio primitives) belong to one event loop;
+        # keep one per loop so the service is safe under any ASGI runner or test client.
+        self._clients: dict[int, Any] = {}
+        self._gates: dict[int, asyncio.Semaphore] = {}
+        self._dead_models: set[str] = set()
 
     # ------------------------------------------------------------ client
     @property
@@ -63,27 +69,53 @@ class GeminiService:
     def _get_client(self):
         if not self.configured:
             raise GeminiError("gemini_not_configured", "Gemini is not configured. Add GEMINI_API_KEY to .env (see .env.example).", 503)
-        if self._client is None:
+        loop_id = id(asyncio.get_running_loop())
+        client = self._clients.get(loop_id)
+        if client is None:
             from google import genai
             from google.genai import types
 
             opts = types.HttpOptions(timeout=int(self.settings.gemini_timeout_s * 1000))
             if self.settings.gemini_api_key:
-                self._client = genai.Client(api_key=self.settings.gemini_api_key, http_options=opts)
+                client = genai.Client(api_key=self.settings.gemini_api_key, http_options=opts)
             else:
-                self._client = genai.Client(vertexai=True, http_options=opts)
-        return self._client
+                client = genai.Client(vertexai=True, http_options=opts)
+            self._clients = {loop_id: client}  # drop clients of dead loops
+        return client
+
+    def _gate(self) -> asyncio.Semaphore:
+        loop_id = id(asyncio.get_running_loop())
+        gate = self._gates.get(loop_id)
+        if gate is None:
+            gate = asyncio.Semaphore(self.settings.gemini_concurrency)
+            self._gates = {loop_id: gate}
+        return gate
+
+    def _models(self) -> list[str]:
+        chain = [self.settings.gemini_model, *self.settings.gemini_fallback_models]
+        out: list[str] = []
+        for m in chain:
+            if m and m not in out and m not in self._dead_models:
+                out.append(m)
+        return out
 
     # ------------------------------------------------------------ core call
     async def _generate(self, task: str, schema: type[T], contents: list[Any], cache_payload: Any, system: str,
-                        temperature: float = 0.2, use_cache: bool = True) -> tuple[T, bool]:
-        model = self.settings.gemini_model
-        key = self.store.cache_key(task, model, cache_payload)
+                        temperature: float = 0.2, use_cache: bool = True) -> tuple[T, bool, str]:
+        """Returns (validated result, served_from_cache, model_that_answered).
+
+        Transient failures (rate limit, 5xx, timeout, network, malformed JSON)
+        fall through the model chain, then back off (honouring the server's
+        retry delay) and try again, all within a total time budget."""
+        primary = self.settings.gemini_model
+        key = self.store.cache_key(task, primary, cache_payload)
         if use_cache:
             hit = self.store.cache_get(key)
             if hit is not None:
                 try:
-                    return schema.model_validate(hit), True
+                    body = hit.get("__result__", hit) if isinstance(hit, dict) else hit
+                    model_used = hit.get("__model__", primary) if isinstance(hit, dict) else primary
+                    return schema.model_validate(body), True, model_used
                 except ValidationError:
                     pass  # schema changed since cached: refetch
 
@@ -96,57 +128,75 @@ class GeminiService:
             response_mime_type="application/json",
             response_schema=schema,
         )
-        last: Exception | None = None
-        attempts = self.settings.gemini_max_retries + 1
-        for attempt in range(attempts):
-            try:
-                resp = await asyncio.wait_for(
-                    client.aio.models.generate_content(model=model, contents=contents, config=cfg),
-                    timeout=self.settings.gemini_timeout_s + 2,
-                )
-                text = (resp.text or "").strip()
-                if not text:
-                    raise GeminiError("gemini_empty", "Gemini returned an empty response (possibly blocked by safety filters).")
-                data = json.loads(text)
-                result = schema.model_validate(data)
-                self.store.cache_put(key, task, model, result.model_dump(mode="json"))
-                return result, False
-            except asyncio.TimeoutError as e:
-                last = GeminiError("gemini_timeout", f"Gemini did not respond within {self.settings.gemini_timeout_s:.0f}s.", 504)
-                log.warning("gemini timeout task=%s attempt=%d", task, attempt + 1)
-                del e
-            except (json.JSONDecodeError, ValidationError) as e:
-                last = GeminiError("gemini_malformed", f"Gemini returned output that failed schema validation: {str(e)[:300]}")
-                log.warning("gemini malformed task=%s attempt=%d: %s", task, attempt + 1, str(e)[:200])
-            except errors.ClientError as e:
-                code = getattr(e, "code", 400)
-                if code == 429:
-                    last = GeminiError("gemini_rate_limited", "Gemini rate limit reached. Try again shortly.", 503)
-                elif code in (401, 403):
-                    raise GeminiError("gemini_auth", "Gemini rejected the API key (401/403). Check GEMINI_API_KEY.", 503) from e
-                elif code == 404:
-                    raise GeminiError("gemini_model_not_found", f"Model '{model}' not available for this key. Set GEMINI_MODEL.", 503) from e
-                else:
-                    raise GeminiError("gemini_bad_request", f"Gemini rejected the request ({code}): {str(e)[:300]}") from e
-            except errors.ServerError as e:
-                last = GeminiError("gemini_server_error", f"Gemini service error ({getattr(e, 'code', 500)}).", 503)
-            except GeminiError as e:
-                last = e
-            except Exception as e:  # network errors etc.
-                last = GeminiError("gemini_unreachable", f"Could not reach Gemini: {type(e).__name__}: {str(e)[:200]}", 503)
-            if attempt < attempts - 1:
-                await asyncio.sleep(min(8.0, (2 ** attempt) + random.random()))
-        assert last is not None
-        raise last
+        started = time.monotonic()
+        budget = self.settings.gemini_total_budget_s
+        last: GeminiError | None = None
+        retry_hint = 0.0
+        rounds = self.settings.gemini_max_retries + 1
+        for rnd in range(rounds):
+            for model in self._models():
+                remaining = budget - (time.monotonic() - started)
+                if remaining < 3:
+                    break
+                try:
+                    async with self._gate():
+                        resp = await asyncio.wait_for(
+                            client.aio.models.generate_content(model=model, contents=contents, config=cfg),
+                            timeout=min(self.settings.gemini_timeout_s + 2, remaining),
+                        )
+                    text = (resp.text or "").strip()
+                    if not text:
+                        raise GeminiError("gemini_empty", "Gemini returned an empty response (possibly blocked by safety filters).")
+                    result = schema.model_validate(json.loads(text))
+                    self.store.cache_put(key, task, primary, {"__model__": model, "__result__": result.model_dump(mode="json")})
+                    if model != primary:
+                        log.info("gemini task=%s answered by fallback model %s", task, model)
+                    return result, False, model
+                except asyncio.TimeoutError:
+                    last = GeminiError("gemini_timeout", f"Gemini did not respond within {self.settings.gemini_timeout_s:.0f}s.", 504)
+                    log.warning("gemini timeout task=%s model=%s", task, model)
+                except (json.JSONDecodeError, ValidationError) as e:
+                    last = GeminiError("gemini_malformed", f"Gemini returned output that failed schema validation: {str(e)[:300]}")
+                    log.warning("gemini malformed task=%s model=%s: %s", task, model, str(e)[:200])
+                except errors.ClientError as e:
+                    code = getattr(e, "code", 400)
+                    if code == 429:
+                        last = GeminiError("gemini_rate_limited", "Gemini rate limit reached on every configured model. Try again in a minute.", 503)
+                        retry_hint = max(retry_hint, _retry_delay(str(e)))
+                        log.warning("gemini 429 task=%s model=%s", task, model)
+                    elif code in (401, 403):
+                        raise GeminiError("gemini_auth", "Gemini rejected the API key (401/403). Check GEMINI_API_KEY.", 503) from e
+                    elif code == 404:
+                        self._dead_models.add(model)
+                        last = GeminiError("gemini_model_not_found", f"Model '{model}' is not available for this key. Set GEMINI_MODEL.", 503)
+                        log.warning("gemini model unavailable: %s", model)
+                    else:
+                        raise GeminiError("gemini_bad_request", f"Gemini rejected the request ({code}): {str(e)[:300]}") from e
+                except errors.ServerError as e:
+                    last = GeminiError("gemini_server_error", f"Gemini service error ({getattr(e, 'code', 500)}).", 503)
+                    log.warning("gemini %s task=%s model=%s", getattr(e, "code", 500), task, model)
+                except GeminiError as e:
+                    last = e
+                except Exception as e:  # network errors etc.
+                    last = GeminiError("gemini_unreachable", f"Could not reach Gemini: {type(e).__name__}: {str(e)[:200]}", 503)
+            if rnd < rounds - 1:
+                wait = min(12.0, max(retry_hint, (2 ** rnd) + random.random()))
+                if budget - (time.monotonic() - started) < wait + 4:
+                    break
+                await asyncio.sleep(wait)
+        raise last or GeminiError("gemini_unreachable", "Gemini did not answer within the time budget.", 503)
 
     # ------------------------------------------------------------ tasks
-    async def analyze_request(self, text: str | None, audio_b64: str | None, hint_language: str | None) -> tuple[RequestAnalysis, bool]:
+    async def analyze_request(self, text: str | None, audio_b64: str | None, hint_language: str | None) -> tuple[RequestAnalysis, bool, str]:
         instr = (
             "Analyse this citizen development request from India. Identify the language (ISO 639-1) and give the "
             "verbatim transcript in the original script. Provide a faithful English rendering (normalized_request) without "
             "adding facts. Classify the primary infrastructure/service category. Extract any place mentioned; give "
             "district and state as romanised English names only if mentioned or unambiguous from the place, otherwise null. "
-            "Score urgency 0..1 from what is said (risk to life/health, duration, number of people). Do not guess."
+            "Score urgency 0..1 from what is said, using this rubric: 0.1-0.3 inconvenience or request for improvement; "
+            "0.4-0.6 a basic service (drinking water, sanitation, power, schooling) is missing or broken for a household or community; "
+            "0.7-0.9 the gap creates a health or safety risk, or affects pregnant women, children, elderly or many people; "
+            "1.0 immediate danger to life. Explain the score in urgency_reason. Do not guess beyond the text."
         )
         if hint_language:
             instr += f" The user indicated the language may be '{hint_language}', but detect it yourself."
@@ -163,7 +213,7 @@ class GeminiService:
             payload = {"text": text, "hint": hint_language}
         return await self._generate("analyze_request", RequestAnalysis, contents, payload, SYSTEM_BASE)
 
-    async def map_query(self, query: str, states: list[str]) -> tuple[MapQuery, bool]:
+    async def map_query(self, query: str, states: list[str]) -> tuple[MapQuery, bool, str]:
         instr = (
             "Translate the planner's question into a structured filter for a district map. Scores are 0-100. "
             "'need' = public-indicator need, 'demand' = citizen-reported demand percentile, 'unheard' = high need with low demand. "
@@ -175,7 +225,7 @@ class GeminiService:
         )
         return await self._generate("map_query", MapQuery, [instr], {"q": query}, SYSTEM_BASE, temperature=0.0)
 
-    async def explain(self, evidence: dict[str, Any], interventions: list[dict[str, Any]]) -> tuple[Explanation, bool]:
+    async def explain(self, evidence: dict[str, Any], interventions: list[dict[str, Any]]) -> tuple[Explanation, bool, str]:
         instr = (
             "Explain why this district appears in the Unheard view, using ONLY the evidence JSON. "
             "need_drivers: up to 4 indicators with the highest deficit, each statement citing the indicator's value, unit "
@@ -188,7 +238,7 @@ class GeminiService:
         )
         return await self._generate("explain", Explanation, [instr], {"e": evidence, "i": interventions}, SYSTEM_BASE)
 
-    async def policy_brief(self, evidence: dict[str, Any], simulation: dict[str, Any] | None, interventions: list[dict[str, Any]]) -> tuple[PolicyBriefText, bool]:
+    async def policy_brief(self, evidence: dict[str, Any], simulation: dict[str, Any] | None, interventions: list[dict[str, Any]]) -> tuple[PolicyBriefText, bool, str]:
         instr = (
             "Write a concise policy brief for a district planning officer, using ONLY the evidence, simulation and "
             "interventions JSON below. Every number you write must appear in that JSON. Label simulated figures as "
@@ -208,10 +258,11 @@ class GeminiService:
         if missing:
             client = self._get_client()
             try:
-                resp = await asyncio.wait_for(
-                    client.aio.models.embed_content(model=model, contents=[texts[i] for i in missing]),
-                    timeout=self.settings.gemini_timeout_s,
-                )
+                async with self._gate():
+                    resp = await asyncio.wait_for(
+                        client.aio.models.embed_content(model=model, contents=[texts[i] for i in missing]),
+                        timeout=self.settings.gemini_timeout_s,
+                    )
             except asyncio.TimeoutError as e:
                 raise GeminiError("gemini_timeout", "Embedding request timed out.", 504) from e
             except Exception as e:
@@ -243,3 +294,9 @@ def cluster(vectors: list[list[float]], threshold: float = 0.84) -> list[list[in
         else:
             clusters.append([i])
     return clusters
+
+
+def _retry_delay(message: str) -> float:
+    """Extract the server-suggested retry delay (e.g. 'retryDelay': '17s')."""
+    m = re.search(r"retry[^0-9]{0,24}(\d+(?:\.\d+)?)\s*s", message, re.IGNORECASE)
+    return float(m.group(1)) if m else 0.0

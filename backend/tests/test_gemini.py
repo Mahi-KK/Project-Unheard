@@ -18,8 +18,9 @@ class FakeModels:
         self.replies = list(replies)
         self.calls = 0
 
-    async def generate_content(self, **_):
+    async def generate_content(self, **kw):
         self.calls += 1
+        self.models_seen = getattr(self, 'models_seen', []) + [kw.get('model')]
         r = self.replies.pop(0) if self.replies else self.replies_last
         if isinstance(r, Exception):
             raise r
@@ -28,11 +29,13 @@ class FakeModels:
         return SimpleNamespace(text=r)
 
 
-def make_service(tmp_path: Path, replies, timeout=2.0, retries=1):
-    s = replace(get_settings(), gemini_api_key="test-key", gemini_timeout_s=timeout, gemini_max_retries=retries)
+def make_service(tmp_path: Path, replies, timeout=2.0, retries=1, fallbacks=None):
+    s = replace(get_settings(), gemini_api_key="test-key", gemini_timeout_s=timeout, gemini_max_retries=retries,
+                gemini_fallback_models=fallbacks or [], gemini_total_budget_s=30)
     svc = GeminiService(s, Store(tmp_path / "t.db"))
     models = FakeModels(replies)
-    svc._client = SimpleNamespace(aio=SimpleNamespace(models=models))
+    fake = SimpleNamespace(aio=SimpleNamespace(models=models))
+    svc._get_client = lambda: fake
     return svc, models
 
 
@@ -43,9 +46,9 @@ VALID = json.dumps({"mode": "unheard", "category": "water", "states": [], "sort_
 
 def test_valid_response_is_validated_and_cached(tmp_path):
     svc, models = make_service(tmp_path, [VALID])
-    q, cached = asyncio.run(svc.map_query("water need low demand", ["Karnataka"]))
+    q, cached, _ = asyncio.run(svc.map_query("water need low demand", ["Karnataka"]))
     assert isinstance(q, MapQuery) and q.demand_max == 30 and not cached
-    q2, cached2 = asyncio.run(svc.map_query("water need low demand", ["Karnataka"]))
+    q2, cached2, _ = asyncio.run(svc.map_query("water need low demand", ["Karnataka"]))
     assert cached2 and models.calls == 1
 
 
@@ -58,7 +61,7 @@ def test_malformed_json_retries_then_fails(tmp_path):
 
 def test_malformed_then_valid_recovers(tmp_path):
     svc, _ = make_service(tmp_path, ["{oops", VALID], retries=1)
-    q, _ = asyncio.run(svc.map_query("recover please", []))
+    q, _, _ = asyncio.run(svc.map_query("recover please", []))
     assert q.category == "water"
 
 
@@ -76,3 +79,20 @@ def test_not_configured(tmp_path):
     with pytest.raises(GeminiError) as e:
         asyncio.run(svc.map_query("anything", []))
     assert e.value.code == "gemini_not_configured" and e.value.status == 503
+
+
+def test_rate_limit_falls_back_to_next_model(tmp_path):
+    from google.genai import errors
+
+    quota = errors.ClientError(429, {"error": {"code": 429, "message": "quota exceeded", "status": "RESOURCE_EXHAUSTED"}})
+    svc, models = make_service(tmp_path, [quota, VALID], retries=0, fallbacks=["fallback-model"])
+    q, cached, used = asyncio.run(svc.map_query("fallback please", []))
+    assert q.category == "water" and not cached and used == "fallback-model"
+    assert models.models_seen == [svc.settings.gemini_model, "fallback-model"]
+
+
+def test_retry_delay_parsing():
+    from app.services.gemini_service import _retry_delay
+
+    assert _retry_delay("... 'retryDelay': '17s' ...") == 17.0
+    assert _retry_delay("no hint") == 0.0

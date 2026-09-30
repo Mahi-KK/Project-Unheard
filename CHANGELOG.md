@@ -1,5 +1,19 @@
 # Changelog
 
+## v3.1 — live Gemini hardening, first packaged release
+
+### Improved
+- **Gemini reliability on free-tier keys**: automatic fallback across models (`gemini-3.6-flash` → `gemini-3.5-flash` → `gemini-3.1-flash-lite`) on rate limits or overload, server-suggested retry delays, a total time budget per request and a concurrency limit. The model that actually answered is shown in the app.
+- **Place matching**: requests naming *West Singhbhum*, *Bangalore*, *Mewat* or *Gurgaon* now resolve to Pashchimi Singhbhum, Bengaluru, Nuh and Gurugram (Hindi direction words and survey-era names).
+- **Urgency scoring**: explicit rubric so a broken drinking-water source is scored as a basic-service outage, with the reason shown.
+- Fixed an event-loop error in request clustering (embeddings).
+
+### Verified live
+- 10/10 end-to-end Gemini checks: Kannada, Hindi and English text; Kannada voice; three natural-language map queries; grounded explanation; policy brief PDF; embeddings clustering.
+
+### Release
+- Windows installer and portable build, with SHA-256 checksums.
+
 ## v3 — free map movement, responsive layout, animated landing and map backdrop
 
 ### Fixed

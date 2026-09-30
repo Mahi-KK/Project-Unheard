@@ -61,6 +61,9 @@ class Settings:
     cors_origins: list[str] = field(default_factory=list)
     api_token: str | None = None
     use_vertex: bool = False
+    gemini_fallback_models: list[str] = field(default_factory=list)
+    gemini_total_budget_s: float = 40.0
+    gemini_concurrency: int = 2
 
     @property
     def gemini_configured(self) -> bool:
@@ -82,6 +85,9 @@ def get_settings() -> Settings:
         gemini_embed_model=os.environ.get("GEMINI_EMBED_MODEL", "gemini-embedding-001"),
         gemini_timeout_s=float(os.environ.get("GEMINI_TIMEOUT_S", "25")),
         gemini_max_retries=int(os.environ.get("GEMINI_MAX_RETRIES", "2")),
+        gemini_fallback_models=[m.strip() for m in os.environ.get("GEMINI_FALLBACK_MODELS", "gemini-3.5-flash,gemini-3.1-flash-lite").split(",") if m.strip()],
+        gemini_total_budget_s=float(os.environ.get("GEMINI_TOTAL_BUDGET_S", "40")),
+        gemini_concurrency=int(os.environ.get("GEMINI_CONCURRENCY", "2")),
         data_path=Path(os.environ.get("UNHEARD_DATA_PATH", root / "data" / "processed" / "districts.json")),
         db_path=Path(os.environ.get("UNHEARD_DB_PATH", app_data_dir() / "unheard.db")),
         fonts_dir=root / "backend" / "app" / "assets" / "fonts",

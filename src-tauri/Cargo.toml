@@ -1,6 +1,6 @@
 [package]
 name = "unheard"
-version = "0.1.0"
+version = "3.1.0"
 description = "UNHEARD — finding the needs no one reported"
 authors = ["UNHEARD team"]
 license = "MIT"

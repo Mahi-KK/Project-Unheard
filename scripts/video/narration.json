@@ -1,0 +1,57 @@
+{
+  "voice": "Charon",
+  "segments": [
+    {
+      "id": "s00_title",
+      "text": "Development planning in India often follows what citizens report. But reporting depends on phones, literacy, language and trust. So the places with the weakest services are often the quietest. Unheard finds them."
+    },
+    {
+      "id": "s01_intro",
+      "text": "This is Unheard, a Windows desktop application. For every district in India, it compares two signals: what people report, and what public data indicates. The gap between them is the story."
+    },
+    {
+      "id": "s02_demand",
+      "text": "Demand mode shows citizen reports per hundred thousand people. In this prototype the baseline is a clearly labelled synthetic demonstration signal. We never present it as real complaints."
+    },
+    {
+      "id": "s03_capture",
+      "text": "A request arrives in Kannada. Gemini identifies the language, transcribes it, renders it in English, classifies it as a drinking water problem, finds the district, and scores the urgency with a reason."
+    },
+    {
+      "id": "s04_commit",
+      "text": "The officer confirms, and the request joins the map. Raichur's water demand percentile updates instantly. The Unheard Index is recomputed by deterministic code, not by the AI."
+    },
+    {
+      "id": "s05_reveal",
+      "text": "Now, reveal unheard. Reported demand fades. Underlying need surfaces from fourteen public indicators, from NFHS five and Census twenty eleven. Then the districts where need is high but reporting is low emerge. Raichur now has a voice. These places did not."
+    },
+    {
+      "id": "s06_dossier",
+      "text": "Each district opens as a dossier. Bijapur in Chhattisgarh ranks first. The index is need, times one minus demand, shown right on screen, with every indicator value, its year and its source."
+    },
+    {
+      "id": "s07_explain",
+      "text": "Gemini explains why the district appears here, using only the evidence packet. Any generated sentence that cites a number not found in the evidence is removed automatically."
+    },
+    {
+      "id": "s08_whatif",
+      "text": "What if forty community sanitation facilities were funded? The simulator projects people covered, the change in need, and the new index. Every output is labelled projected and modelled."
+    },
+    {
+      "id": "s09_brief",
+      "text": "With one click, Gemini drafts a policy brief from the same evidence and the simulated scenario, typeset as a printable PDF with data sources and limitations."
+    },
+    {
+      "id": "s10_ask",
+      "text": "Planners can also simply ask the map. Gemini turns the question into an explicit filter, shown as chips, while the ranking itself is computed deterministically."
+    },
+    {
+      "id": "s11_views",
+      "text": "Need, demand and unheard views work for every category, in a night or day map. The core map, scores, dossier and simulator run fully offline."
+    },
+    {
+      "id": "s12_close",
+      "text": "Unheard. Gemini for understanding, deterministic scoring for trust, and a design ready to scale from one state to any country with survey data. Finding the needs no one reported."
+    }
+  ]
+}

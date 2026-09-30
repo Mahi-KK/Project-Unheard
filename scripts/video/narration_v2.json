@@ -1,0 +1,27 @@
+{
+  "note": "One line per on-screen event. 'cue' = event from cues.json; 'at' = 't' (cue start) or 'settle' (moment its actions finished, e.g. a click). Lines are written after reviewing the recording so they describe exactly what is on screen.",
+  "lines": [
+    { "cue": "intro", "at": "t", "text": "Across India, planners decide where the next water scheme, school or clinic should go, and mostly, they follow the complaints." },
+    { "cue": "intro_gap", "at": "t", "text": "But complaints come from people with phones, literacy and time. The quietest places are often the ones in greatest need." },
+    { "cue": "enter", "at": "t", "text": "This is Unheard. Let's step into India: seven hundred and five districts." },
+    { "cue": "demand", "at": "t", "text": "Each teal circle shows a district's citizen reports per hundred thousand people. In this prototype, that report baseline is synthetic, and it's labelled that way everywhere." },
+    { "cue": "request", "at": "t", "text": "Now a new request arrives, in Kannada, from a village in Raichur, about drinking water." },
+    { "cue": "analysing", "at": "settle_click", "text": "Gemini reads it. It detects the language, translates it, and works out the problem, the place, and how urgent it is." },
+    { "cue": "analysed", "at": "t", "text": "Kannada. A broken borewell, and a severe water shortage. Category, water. Location, Raichur, Karnataka. Urgency, point six, with the reason spelt out." },
+    { "cue": "commit", "at": "t", "text": "An officer confirms, and the request joins the map. Raichur's water demand updates instantly. Every score comes from code, not from the AI." },
+    { "cue": "reveal", "at": "t", "text": "Now, the key idea. Let's reveal what hasn't been heard." },
+    { "cue": "reveal", "at": "settle", "text": "Reported demand fades. Underlying need rises, from fourteen public indicators. And then, the districts where need is high, but almost no one is reporting." },
+    { "cue": "reveal_done", "at": "settle", "text": "Raichur now has a voice. Bijapur, Pashchimi Singhbhum and Dindori don't, yet." },
+    { "cue": "dossier", "at": "t", "text": "Bijapur, in Chhattisgarh, ranks first. The score is fully transparent: need, times one minus demand. Sixty-five point nine." },
+    { "cue": "evidence", "at": "t", "text": "Every indicator shows its value, its year, and its source, from the National Family Health Survey and the Census." },
+    { "cue": "explaining", "at": "settle_click", "text": "Now Gemini explains why this district stands out, using only this evidence." },
+    { "cue": "explained", "at": "t", "text": "Only thirty point six percent use improved sanitation. Just one point two percent of five-year-olds attended pre-school. Any sentence quoting a number that isn't in the evidence is removed." },
+    { "cue": "whatif", "at": "t", "text": "What if we funded forty community sanitation facilities?" },
+    { "cue": "projected", "at": "t", "text": "Twenty-four thousand more people covered, and the score drops from sixty-five point nine to sixty-four. Clearly marked as a projection." },
+    { "cue": "drafting", "at": "settle_click", "text": "With one click, Gemini drafts a policy brief from the same evidence, and this scenario." },
+    { "cue": "drafted", "at": "t", "text": "Current need, observed demand, why the area is unheard, the intervention, and its projected effect. Ready to export as a PDF." },
+    { "cue": "asking", "at": "t", "text": "Planners can also simply ask the map. Where is sanitation need high, but reporting low, in Odisha and Jharkhand?" },
+    { "cue": "answered", "at": "t", "text": "Gemini turns the question into a filter you can see. The ranking itself is computed by code. Malkangiri comes first." },
+    { "cue": "close", "at": "t", "text": "Unheard. Gemini for understanding. Transparent scoring for trust. Finding the needs no one reported." }
+  ]
+}

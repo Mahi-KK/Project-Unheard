@@ -1,7 +1,7 @@
 {
   "name": "unheard",
   "private": true,
-  "version": "0.1.0",
+  "version": "3.1.0",
   "description": "UNHEARD — finding the needs no one reported. Civic intelligence desktop app (Tauri + React + FastAPI + Gemini).",
   "license": "MIT",
   "type": "module",
